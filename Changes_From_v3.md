@@ -20,7 +20,7 @@ The following changes have been made from v3 of the QA checks.  These might affe
 - The following checks are new:
     - _hvh-02-thick-disks_ : Check all virtual machines are using thick provisioned disks.
     - _hvh-07-vhdx-disks_  : Check all virtual machines are using VHDX disks if the host is Windows 2012 or above.
-
+    - _sys-23-environment-variables_ : Allows you to checks a specific list of system environment variables and values to see if they are set correctly.
 
 ## Engine
 - Remote server scanning is now handled by using WinRM sessions.
