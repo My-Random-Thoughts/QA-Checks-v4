@@ -27,9 +27,8 @@ The following changes have been made from v3 of the QA checks.  These might affe
     This can be configured to use either HTTP (default) or HTTPS on either the standard ports (5985/5986) or a custom one.
     Further configuration may be added at a later date (request it if required).
 
-- The checks, engine and all output is now fully language independent (currently only "English UK" exists)
-    The only part of the QA project that is language specific is the GUI Configuration Tool.  That will be translated at a later date.
-    New languages can be created by following the instructions in the "i18n" folder.
+- The checks, engine and all output is now fully language independent.
+    New languages can be created by following the instructions in the "i18n" folder.  Please help translate this into your language.
 
 
 ## Settings File(s)
@@ -59,4 +58,6 @@ The following changes have been made from v3 of the QA checks.  These might affe
 - The GUI Configuration Tool has had a bit of a make over.  Most of the pages are the same, but little tweaks and enhancements have been made.
     - The language and settings drop-down boxes now show flags and icons.
     - Within the Additional Options window, you can now specify some WinRM settings (Port and HTTP(s))
+    - The GUI tool is now fully language independent.
+        New languages can be created by following the instructions in the "i18n" folder.  Please help translate this into your language.
 
