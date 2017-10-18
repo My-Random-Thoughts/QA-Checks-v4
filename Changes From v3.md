@@ -23,6 +23,9 @@ The following changes have been made from v3 of the QA checks.  These might affe
     - _hvh-07-vhdx-disks_  : Check all virtual machines are using VHDX disks if the host is Windows 2012 or above.
     - _sys-23-environment-variables_ : Allows you to checks a specific list of system environment variables and values to see if they are set correctly.
 
+- For developers, the variable `$script:appSettings` has been renamed to `$script:chkValues`
+
+
 ## Engine
 - Remote server scanning is now handled by using WinRM sessions.
     This can be configured to use either HTTP (default) or HTTPS on either the standard ports (5985/5986) or a custom one.
