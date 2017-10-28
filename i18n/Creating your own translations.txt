@@ -1,0 +1,62 @@
+
+  CREATING YOUR OWN TRANSLATION FILE
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  In order to create a new language translation:
+
+  1. Pick the correct language and country codes from below to make up a language tag
+     A: Pick the correct language code from the ISO639-1 list found at https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
+     B: Pick the correct country code from the ISO3166-1 list found at https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements
+
+       For example, English (United Kingdom) would be "en-GB"
+                    Français (France)             :   "fr-FR"
+                    Deutsche (Deutschland)        :   "de-DE"
+
+
+  2. Take a copy of the EN-GB.INI and EN-GB-TOOL.INI files (or any other language files that may exist) and rename it to suit your language and country as above.
+     The file encoding format must be set as UTF-8.
+
+
+  3. Edit these new files, putting in all the language specific strings you can, making sure of any spellings and grammar as required.
+     Any strings with numbers in curly brackets {0}, {1} must be kept, and put in the correct language specific position.
+
+     NOTE: Only change the values in quotes - Do not change any other value
+
+
+  4. If you want a pretty flag icon for your new language, the ones I am using are from  http://www.icondrawer.com/img/free_icons/Flags.zip
+     In the folder ".\flags\flags_iso\16\", find your flag using the ISO3166-1 country code above.
+     The ZIP file attached as part of this project is a copy of the downloaded file with all non-required icons removed.
+
+
+  5. Save the translated INI files and flag icon into the i18n folder, making sure that the file names match.
+
+
+  6. Test.  Test a lot. (see below)
+
+
+  7. Send the translated INI files to me for inclusion into the main repository (optional, but I would really appreciate it).
+
+
+  8. Thank you for helping to translate my tool.
+
+
+
+  TESTING YOUR TRANSLATION FILE
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  To make sure your translated language file is working as it should, the following list may help:
+
+  1. The file encoding format must be set to UTF-8.
+
+  2. Every entry must be surrounded by single-quotes.
+     The exception to this rule is the APPL entry for each check.
+
+  3. Single-quotes must not be used anywhere within the text.  Use double-quotes.
+
+  4. The APPL entry is a lookup value and must match one of the three letter entries in the [applyto] section.
+     It must not have quotes around it.
+
+  5. The main file name must be  9 characters long (including the extension):  ??-??.ini
+     The tool file name must be 14 characters long (including the extension):  ??-??-tool.ini
+
+  6. You don't need to translate everything.  Anything not translated will use the English (United Kingdom) entry.
