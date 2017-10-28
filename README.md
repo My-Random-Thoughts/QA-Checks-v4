@@ -21,14 +21,14 @@ Most of this extra tooling and configuration should be automated, however checks
 There are over 100 checks split over 9 separate sections.  These are executed whenever the QA script is run against one or more servers and can take anywhere between 30 seconds and a couple of minutes to complete.  If you are checking multiple servers then this time is per server.  
 
 For a full list of checks and their sections, check the GitHub Wiki page:
-   > [[Sections]]
+   > https://github.com/My-Random-Thoughts/QA-Checks-v4/wiki/Sections
 
 ---
 ## Quick Start Guide
 There are three stages required to get you up and running.  The first one is the quickest and will generate a HTML report of its findings.  This report will have quite a number of failures in most environments.  Don’t worry; stage two will help you fix these failures - either as a scan configuration change or to highlight areas in the environment that may need some work.
-   > [[Quick-Start-Guide]]
+   > https://github.com/My-Random-Thoughts/QA-Checks-v4/wiki/Quick-Start-Guide
 
 ---
 ## Language Translations
 All the checks, the scanning engine and the settings configuration tool can be displayed in your specific language.  If you want to help out translating this tool, please see the following guide:
-   > [[Creating A New Language File]]
+   > https://github.com/My-Random-Thoughts/QA-Checks-v4/wiki/Creating-A-New-Language-File
