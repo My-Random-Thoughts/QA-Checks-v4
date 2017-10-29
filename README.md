@@ -32,3 +32,9 @@ There are three stages required to get you up and running.  The first one is the
 ## Language Translations
 All the checks, the scanning engine and the settings configuration tool can be displayed in your specific language.  If you want to help out translating this tool, please see the following guide:
    > https://github.com/My-Random-Thoughts/QA-Checks-v4/wiki/Creating-A-New-Language-File
+
+
+---
+## Changes From Version 3
+There are quite a number of changes and improvements from version 3 (which are still available).  The following document lists them:
+   > https://github.com/My-Random-Thoughts/QA-Checks-v4/blob/master/Changes_From_v3.md
