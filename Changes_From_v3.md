@@ -34,6 +34,8 @@ The following changes have been made from v3 of the QA checks.  These might affe
 - The checks, engine and all output is now fully language independent.
     New languages can be created by following the instructions in the "i18n" folder.  Please help translate this into your language.
 
+- There is a new more modern report format.  An example of this can be viewed here – https://myrandomthoughts.co.uk/wp-content/uploads/2017/10/v4-example-report.html
+
 
 ## Settings File(s)
 - All existing settings files should continue to work as is, but will need passing through the GUI Configuration Tool first, or making the following manual changes:
