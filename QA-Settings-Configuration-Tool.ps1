@@ -831,12 +831,16 @@ Function Show-AdditionalOptions ()
 
     $btn_Save_Click = {
         # Save the results before closing the form...
-        $script:settings.Timeout        = $($cmo_TimeOut.SelectedItem.Text.Trim());
-        $script:settings.Concurrent     = $($cmo_Concurrent.SelectedItem.Text.Trim());
-        $script:settings.OutputLocation = $($txt_Location.Text.Trim());
-        $script:settings.SessionPort    = $($txt_Port.Text.Trim());
-        $script:settings.SessionUseSSL  = $($chk_UseSSL.Checked.ToString());
-        $script:settings.Modules        = $($lbl_ModuleList.Text);
+        $script:settings.Timeout        = $($cmo_TimeOut.SelectedItem.Text.Trim())
+        $script:settings.Concurrent     = $($cmo_Concurrent.SelectedItem.Text.Trim())
+        $script:settings.OutputLocation = $($txt_Location.Text.Trim())
+        $script:settings.SessionPort    = $($txt_Port.Text.Trim())
+        $script:settings.SessionUseSSL  = $($chk_UseSSL.Checked.ToString())
+
+        If ($lbl_ModuleList.Text -eq $($script:ToolLangINI['add-page4']['None'])) { $script:settings.Modules = '' }
+        Else                                                                      { $script:settings.Modules = $($lbl_ModuleList.Text) }
+
+
         $frm_Additional.DialogResult    = [System.Windows.Forms.DialogResult]::OK
     }
 #endregion
