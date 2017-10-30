@@ -55,23 +55,32 @@ Function sys-12-snmp-configuration
             }
             Else
             {
-                [Microsoft.Win32.RegistryKey] $gITM  = @(Get-Item -Path 'HKLM:\SYSTEM\CurrentControlSet\services\SNMP\Parameters\ValidCommunities')
-                [System.Collections.ArrayList]$gVALn = $gITM.GetValueNames()
-                If ($gVALn.Count -eq 0)
+                [System.Collections.ArrayList]$gVALn = @()
+                Try
+                {
+                    [Microsoft.Win32.RegistryKey]$gITM = @(Get-Item -Path 'HKLM:\SYSTEM\CurrentControlSet\services\SNMP\Parameters\ValidCommunities' -ErrorAction Stop)
+                    $gVALn = $gITM.GetValueNames()
+                    If ($gVALn.Count -eq 0)
+                    {
+                        $result.result  = $script:lang['Warning']
+                        $result.message = $script:lang['w001']
+                    }
+                    Else
+                    {
+                        $result.result  = $script:lang['Manual']
+                        $result.message = $script:lang['m001']
+
+                        $gVALn | ForEach-Object -Process {
+                            [string]$gValue = $gITM.GetValue($_)
+                            If ($gValue -eq '4') { $result.data += ($($script:lang['dt01']) -f $_) }
+                            If ($gValue -eq '8') { $result.data += ($($script:lang['dt02']) -f $_) }
+                        }
+                    }
+                }
+                Catch
                 {
                     $result.result  = $script:lang['Warning']
                     $result.message = $script:lang['w001']
-                }
-                Else
-                {
-                    $result.result  = $script:lang['Manual']
-                    $result.message = $script:lang['m001']
-
-                    $gVALn | ForEach-Object -Process {
-                        [string]$gValue = $gITM.GetValue($_)
-                        If ($gValue -eq '4') { $result.data += ($($script:lang['dt01']) -f $_) }
-                        If ($gValue -eq '8') { $result.data += ($($script:lang['dt02']) -f $_) }
-                    }
                 }
             }
         }
