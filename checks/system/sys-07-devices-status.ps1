@@ -44,7 +44,7 @@ Function sys-07-devices-status
         [System.Collections.ArrayList]$gCIMi  = @(Get-CimInstance -ClassName 'Win32_PnPEntity' -Filter $filter -Property ('Name', 'ConfigManagerErrorCode') -ErrorAction SilentlyContinue)
 
         [boolean]$onlyDisabled = $true
-        $gCIMi | Sort-Object -Property 'Name' | ForEach-Object -Process {
+        $gCIMi | Sort-Object -Property 'Name' -Unique | ForEach-Object -Process {
             If ($_.ConfigManagerErrorCode -eq 22) { $result.data += ($($script:lang['dt01']) -f $_.Name) }    # Disabled devices
             Else                                  { $result.data += ($($script:lang['dt02']) -f $_.Name) }    # Other state
         }
