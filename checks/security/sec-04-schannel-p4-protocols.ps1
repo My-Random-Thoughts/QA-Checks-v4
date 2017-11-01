@@ -39,15 +39,15 @@ Function sec-04-schannel-p4-protocols
     Try
     {
         $script:chkValues['DisabledProtocols'] | Sort-Object | ForEach-Object -Process {
-            If ((Test-Path -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Hashes\$_") -eq $false) {
+            If ((Test-Path -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$_") -eq $false) {
                 $result.data += ($($script:lang['dt03']) -f $_.ToUpper())    # {0}: Key missing
             }
             Else {
                 Try {
-                    [string]$gITMp1 = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Hashes\$_\Server" -Name 'Enabled'           -ErrorAction Stop).Enabled
+                    [string]$gITMp1 = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$_\Server" -Name 'Enabled'           -ErrorAction Stop).Enabled
                 } Catch { [string]$gITMp1 = 'M' }
                 Try {
-                    [string]$gITMp2 = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Hashes\$_\Client" -Name 'DisabledByDefault' -ErrorAction Stop).DisabledByDefault
+                    [string]$gITMp2 = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$_\Client" -Name 'DisabledByDefault' -ErrorAction Stop).DisabledByDefault
                 } Catch { [string]$gITMp2 = 'M' }
 
 
