@@ -663,7 +663,7 @@ SECTION_LINKS
         If ($sectionNew -ne $sectionOld)
         {
                     $sectionOld   = $sectionNew
-            [string]$selctionName = $script:sections[$sectionNew]
+            [string]$selctionName = $script:lang[$script:lang[$sectionNew]]
             [string]$sectionRow   = "`n    <!-- SECTION CHANGE -->`n    <div id=`"$selctionName`" class=`"sectionItem`"><span class=`"sectionTitle`">$selctionName</span></div>`n"
             [void]  $sectionLinks.AppendLine("        <a href=`"#$selctionName`"><span class=`"tocEntry`">$selctionName</span></a>")
         }
@@ -731,8 +731,9 @@ Function Add-HoverHelp
     {
         Try
         {
-            [xml]$xml  = $script:qahelp[$Check]
-                 $help = '<div class="help"><li><span>{0}<br/>{1}</span><span>{2}</span></li><br/>' -f $script:sections[$Check.Substring(0,3)], $check.Substring(3, 2), $xml.xml.description
+            [xml]   $xml          = $script:qahelp[$Check]
+            [string]$selctionName = $script:lang[$script:lang[$Check.Substring(0,3)]]
+            $help = '<div class="help"><li><span>{0}<br/>{1}</span><span>{2}</span></li><br/>' -f $selctionName, $check.Substring(3, 2), $xml.xml.description
 
             [hashtable]$resultStrings = @{'pass'   = $script:lang['Pass'];   'warning' = $script:lang['Warning']; 'fail' = $script:lang['Fail'];
                                           'manual' = $script:lang['Manual']; 'na'      = $script:lang['Not-Applicable']; }
@@ -792,27 +793,22 @@ Function DivLine { Write-Host ' '.PadRight($script:screenwidth + 1, $E) -Foregro
 
 # COMPILER INSERT
 [int]      $script:waitTime       =  100    # Time to wait between starting new tasks (milliseconds)
-[int]      $script:failurecount   =    0    # #
+[int]      $script:failurecount   =    0    #
 [int]      $script:ccVerbose      =    1    # 
-
-# List of sections, matched with the check short name.  These are displayed in the HTML report file
-[hashtable]$script:sections       = @{'acc' = $script:lang['Accounts']; 'com' = $script:lang['Compliance']; 'drv' = $script:lang['Drives'];   'hvh' = $script:lang['HyperV-Host'];
-                                      'net' = $script:lang['Network'];  'reg' = $script:lang['Regional'];   'sec' = $script:lang['Security']; 'sys' = $script:lang['System'];
-                                      'vmw' = $script:lang['Virtual'];  'err' = $script:lang['SystemFailure']; }
 
 [System.Collections.ArrayList]$script:AllResults = @()
 [System.Collections.ArrayList]$script:servers    = @()
 
-# Resize window to be 120 wide and keep the height.  Also change the buffer height to be large
+# Resize window to be 135 wide and keep the height.  Also change the buffer height to be large
 # This can produce an error message, but it is safe to ignore.
 Try
 {
     $gh = Get-Host
     $ws = $gh.UI.RawUI.WindowSize
     $wh = $ws.Height
-    If ($ws.Width -le 120) {
+    If ($ws.Width -le 135) {
         $ws.Height = 9999
-        $ws.Width  =  120; $gh.UI.RawUI.Set_BufferSize($ws)
+        $ws.Width  =  135; $gh.UI.RawUI.Set_BufferSize($ws)
         $ws.Height =  $wh; $gh.UI.RawUI.Set_WindowSize($ws)
     }
 }
