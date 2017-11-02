@@ -28,13 +28,25 @@ Set-StrictMode  -Version 2
 [string]$version = ('v4.{0}' -f (Get-Date -Format 'yy.MMdd'))
 [string]$date    = (Get-Date -Format 'yyyy/MM/dd HH:mm')
 [string]$path    = (Split-Path (Get-Variable MyInvocation -ValueOnly).MyCommand.Path)
-Try { $gh = Get-Host;  [int]$ws = $gh.UI.RawUI.WindowSize.Width - 2 } Catch { [int]$ws = 80 }
-If ($ws -lt 80) { $ws = 80 }
+
+Try
+{
+    $gh = Get-Host
+    $ws = $gh.UI.RawUI.WindowSize
+    $wh = $ws.Height
+    If ($ws.Width -le 135) {
+        $ws.Height = 9999
+        $ws.Width  =  135; $gh.UI.RawUI.Set_BufferSize($ws)
+        $ws.Height =  $wh; $gh.UI.RawUI.Set_WindowSize($ws)
+    }
+}
+Catch { }
+[int]$script:screenwidth = ($ws.Width - 2)
 
 ###################################################################################################
 [string]$A=[char]9608;[string]$B=[char]9600;[string]$C=[char]9604;[string]$D=[char]9632;[string]$E=[char]9472;[string]$F=[char]9556
 [string]$G=[char]9559;[string]$H=[char]9562;[string]$I=[char]9553;[string]$J=[char]9552;[string]$K=[char]9574;[string]$L=[char]9565
-Function DivLine { Write-Host2 ' '.PadRight($ws + 1, $E) -ForegroundColor Yellow }
+Function DivLine { Write-Host2 ' '.PadRight($script:screenwidth + 1, $E) -ForegroundColor Yellow }
 Function Write-Host2 ([string]$Message, [consolecolor]$ForegroundColor = 'White', [switch]$NoNewline = $false)
 {
     If ($Silent -eq $false) {
@@ -48,13 +60,13 @@ Function Write-Colr ([String[]]$Text, [ConsoleColor[]]$Colour, [Switch]$NoNewlin
 }
 Function Write-Header ([string]$Message)
 {
-    $underline=''.PadLeft($ws-17, $E)
+    $underline=''.PadLeft($script:screenwidth-17, $E)
     $q=("  $F$J$J$K$J$J$J$J$J$K$J$J$G  ","","","","  $I  $H$J$J$J$J$J$L  $I  ","","","","  $I "," $C$C$C $C$C$C "," $I  ","",
         "  $I "," $A $A $A$C$A "," $I  ","","  $I "," $B$A$B $B $B "," $I  ","","  $I ","","         "," $C$C ",
         "  $I ","","  CHECK  ","$C$B$A ","  $I ","","        ","$C$B $A ","  $H$J$J$J$J$J$J$J$J ","","","$B$B$B$A$B ")
     $s=('QA Script Engine','Written by Mike Blackett @ My Random Thoughts','support@myrandomthoughts.co.uk','','',$Message,'',$version,$underline)
     [System.ConsoleColor[]]$z=('White','Gray','Gray','Red','Cyan','Green','Red','Yellow','Yellow'); Write-Host2 ''; For ($x=0; $x-lt$q.Length; $x+=4) {
-    Write-Colr $q[$x],$q[$x+1],$q[$x+2],$q[$x+3],$s[$x/4].PadLeft($ws-17) -Colour White,Cyan,White,Green,$z[$x/4]}; Write-Host2 ''
+    Write-Colr $q[$x],$q[$x+1],$q[$x+2],$q[$x+3],$s[$x/4].PadLeft($script:screenwidth-17) -Colour White,Cyan,White,Green,$z[$x/4]}; Write-Host2 ''
 }
 Function Load-IniFile ([string]$InputFile)
 {
@@ -425,8 +437,10 @@ ForEach ($qa In ($qaChecks | Sort-Object -Property 'Name'))
 [void]$qaScript.AppendLine('#endregion')
 
 [void]$qaScript.AppendLine('#region LANGUAGE')
-[void]$qaScript.Append((Write-LangSectionKeys -Section 'engine'))
-[void]$qaScript.Append((Write-LangSectionKeys -Section 'common'))
+[void]$qaScript.Append((Write-LangSectionKeys -Section 'engine'       ))
+[void]$qaScript.Append((Write-LangSectionKeys -Section 'common'       ))
+[void]$qaScript.Append((Write-LangSectionKeys -Section 'section'      ))
+[void]$qaScript.Append((Write-LangSectionKeys -Section 'sectionlookup'))
 [void]$qaScript.AppendLine('#endregion')
 [void]$qaScript.AppendLine(''.PadLeft(190, '#'))
 Write-Host2 $B -NoNewline -ForegroundColor Cyan                                                    # Second CYAN blob for adding the HELP and LANGUAGE settings

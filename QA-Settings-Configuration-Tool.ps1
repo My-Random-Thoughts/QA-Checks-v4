@@ -840,7 +840,6 @@ Function Show-AdditionalOptions ()
         If ($lbl_ModuleList.Text -eq $($script:ToolLangINI['add-page4']['None'])) { $script:settings.Modules = '' }
         Else                                                                      { $script:settings.Modules = $($lbl_ModuleList.Text) }
 
-
         $frm_Additional.DialogResult    = [System.Windows.Forms.DialogResult]::OK
     }
 #endregion
@@ -1467,15 +1466,16 @@ Function Display-MainForm
         $lst_t2_SelectChecks.Groups.Clear()
         $lst_t2_SelectChecks.CheckBoxes = $True
 
-        [object[]]$folders = (Get-ChildItem -Path "$script:scriptLocation\checks" | Where-Object -FilterScript { $_.PsIsContainer -eq $True } | Select-Object -ExpandProperty 'Name' | Sort-Object -Property 'Name' )
+        [object[]]$folders = (Get-ChildItem -Path "$script:scriptLocation\checks" -Recurse | Where-Object -FilterScript { $_.PsIsContainer -eq $True } | Select-Object -Property ('Name', 'FullName'))
         [System.Globalization.TextInfo]$TextInfo = (Get-Culture).TextInfo    # Used for 'ToTitleCase' below
         ForEach ($folder In ($folders | Sort-Object -Property 'Name'))
         {
-            $folder = $folder.ToLower()
-            $lbl_t1_ScanningScripts.Text = $script:languageINI['Engine'][$($folder.ToUpper())]
+            [string]$folderName = ($folder.Name.ToLower())
+            [string]$folderPath = ($folder.FullName.ToLower().Substring("$script:scriptLocation\checks\".Length))
+            $lbl_t1_ScanningScripts.Text = $script:languageINI['Section'][$($folderName.ToUpper())]
             $lbl_t1_ScanningScripts.Refresh(); [System.Windows.Forms.Application]::DoEvents()
 
-            [object[]]$scripts = (Get-ChildItem -Path "$script:scriptLocation\checks\$folder" -Filter '???-??-*.ps1' | Select-Object -ExpandProperty 'Name' | Sort-Object -Property 'Name' )
+            [object[]]$scripts = (Get-ChildItem -Path "$script:scriptLocation\checks\$folderPath" -Filter '???-??-*.ps1' | Select-Object -ExpandProperty 'Name' | Sort-Object -Property 'Name' )
 
             # Only run if the folder contains checks
             If ([string]::IsNullOrEmpty($scripts) -eq $False)
@@ -1483,7 +1483,7 @@ Function Display-MainForm
                 # FOR TAB-2 LIST OF CHECKS
                 # Generate GUID for group IDs
                 [string]$guid = ([guid]::NewGuid() -as [string]).Split('-')[0]
-                $lst_t2_SelectChecks.Groups.Add("$guid", $script:languageINI['Engine'][$folder])
+                $lst_t2_SelectChecks.Groups.Add("$guid", $script:languageINI['Section'][$folderName])
 
                 ForEach ($script In ($scripts | Sort-Object -Property 'Name'))
                 {
@@ -1493,7 +1493,7 @@ Function Display-MainForm
                     Try { [string]$checkName        =   (                                 $script:languageINI[$checkCode]['Name'])   } Catch { [string]$checkName        = '' }    # Get check name from INI file
                     Try { [string]$checkDesc        =   (                                 $script:languageINI[$checkCode]['Desc'])   } Catch { [string]$checkDesc        = '' }    # Get check description from INI file
                     Try { [string]$checkAppl        =   ($script:languageINI['applyto'][$($script:languageINI[$checkCode]['Appl'])]) } Catch { [string]$checkAppl        = '' }    # Get check applies to from INI file
-                    Try { [string]$checkDescription = "$($script:languageINI.Engine.AppliesTo): $checkAppl`n`n$checkDesc"            } Catch { [string]$checkDescription = '' }
+                    Try { [string]$checkDescription = "$($script:languageINI['engine']['AppliesTo']): $checkAppl`n`n$checkDesc"      } Catch { [string]$checkDescription = '' }
 
                     # Checks to see if the "checkName" value has been retreved or not
                     If ([string]::IsNullOrEmpty($checkName) -eq $False) { $checkName = $checkName.Trim("'") }
@@ -1503,17 +1503,17 @@ Function Display-MainForm
                     # Default back to the scripts description of help if required
                     If ($checkDesc -eq '')
                     {
-                        $getContent = ((Get-Content -Path ("$script:scriptLocation\checks\$folder\$script") -TotalCount 50) -join "`n")
+                        $getContent = ((Get-Content -Path ("$script:scriptLocation\checks\$folderPath\$script") -TotalCount 50) -join "`n")
                         $regExA = [regex]::Match($getContent,     "APPLIES:$script:regExMatch")
                         $regExD = [regex]::Match($getContent, "DESCRIPTION:$script:regExMatch")
 
                         [string]$checkDesc = "Applies To: $($regExA.Groups[1].Value.Trim())!n"
                         ($regExD.Groups[1].Value.Trim().Split("`n")) | ForEach-Object -Process { $checkDesc += $_.Trim() + '  ' }
-                        $checkDescription = "$($script:languageINI.Engine.AppliesTo): $checkAppl`n`n$checkDesc"
+                        $checkDescription = "$checkAppl`n`n$checkDesc".Trim()
                     }
 
                     # Add check details to selection list, and check if required
-                    [System.Windows.Forms.ListViewItem]$newItem = (Add-ListViewItem -ListView $null -Name $checkCode -SubItems ($checkName, $checkDescription, "$folder\$script") -Group $guid -ImageIndex 1 -Enabled $True)
+                    [System.Windows.Forms.ListViewItem]$newItem = (Add-ListViewItem -ListView $null -Name $checkCode -SubItems ($checkName, $checkDescription, "$folderPath\$script") -Group $guid -ImageIndex 1 -Enabled $True)
 
                     [int]$notFound = 2
                     If ([string]::IsNullOrEmpty($settingsINI) -eq $False)
@@ -1525,7 +1525,7 @@ Function Display-MainForm
                     If ($notFound -eq 2)                                                                                         # Unknown State
                     {
                         # Load default "ENABLED/SKIPPED" value from the check itself
-                        If ($getContent -eq '') { $getContent = ((Get-Content -Path ("$script:scriptLocation\checks\$folder\$script") -TotalCount 50) -join "`n") }
+                        If ($getContent -eq '') { $getContent = ((Get-Content -Path ("$script:scriptLocation\checks\$folderPath\$script") -TotalCount 50) -join "`n") }
                         $regExE = [regex]::Match($getContent, "DEFAULT-STATE:$script:regExMatch")
                         If ($regExE.Groups[1].Value.Trim() -eq 'Enabled') { $lst_t2_SelectChecks.Items["$checkCode"].Checked = $True }
                     }
@@ -1537,7 +1537,7 @@ Function Display-MainForm
                 # #####################################################################################
                 # FOR TAB-3 OF MAIN TABPAGE CONTROL
                 # Add TabPage for folder
-                [string]$folderLang = $($script:languageINI['Engine'][$folder])
+                [string]$folderLang = $($script:languageINI['Section'][$folderName])
 
                 $newTab = (New-Object -TypeName 'System.Windows.Forms.TabPage')
                 $newTab.Font           =  $sysFont
@@ -1658,7 +1658,17 @@ Function Display-MainForm
 
         [string]   $FuncOLD  = ''
         [string]   $FuncNEW  = ''
-        [hashtable]$Sections = @{'acc'='Accounts';'com'='Compliance';'drv'='Drives';'hvh'='HyperV-Host';'net'='Network';'reg'='Regional';'sec'='Security';'sys'='System';'vmw'='Virtual'}
+        [hashtable]$Sections = @{'acc'='Accounts';
+                                 'com'='Compliance';
+                                 'ctx'='Citrix';
+                                 'drv'='Drives';
+                                 'exh'='Exchange';
+                                 'hvh'='HyperV-Host';
+                                 'net'='Network';
+                                 'reg'='Regional';
+                                 'sec'='Security';
+                                 'sys'='System';
+                                 'vmw'='Virtual'}
 
         # Start process
         ForEach ($line In $content)
@@ -1842,7 +1852,7 @@ Function Display-MainForm
         {
             # Get correct ListView object
             [System.Windows.Forms.TabPage] $tabObject = $tab_t3_Pages.TabPages["tab_$($folder.Header.Trim())"]
-            [System.Windows.Forms.ListView]$lvwObject =    $tabObject.Controls["lvw_$($folder.Header.Trim())"]
+            [System.Windows.Forms.ListView]$lvwObject =        $tabObject.Controls["lvw_$($folder.Header.Trim())"]
 
             # Clear any existing entries
             $lvwObject.Items.Clear()
