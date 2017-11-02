@@ -25,7 +25,7 @@
         All Servers
 
     REQUIRED-FUNCTIONS:
-        None
+        Check-IsDomainController
 #>
 
 Function com-12-only-one-server-role
