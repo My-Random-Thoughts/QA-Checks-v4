@@ -319,7 +319,7 @@ Write-Host2 $B -NoNewline -ForegroundColor Cyan                                 
 
 [System.Text.StringBuilder]$qaHelp = ''
 # Add each check into the script
-ForEach ($qa In $qaChecks)
+ForEach ($qa In ($qaChecks | Sort-Object -Property 'Name'))
 {
     [string]$CheckHeader = ((Get-Content -Path ($qa.FullName) -TotalCount 50 -ReadCount 50) -join "`n")
 
