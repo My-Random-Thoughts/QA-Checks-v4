@@ -56,7 +56,7 @@ Function com-04-netbackup-agent-installed
         $result.message =    $script:lang['dt01']
         $result.data    = ($($script:lang['dt02']) -f $verCheck.Version)
 
-        [string[]]$ServerNames = @(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Veritas\NetBackup\CurrentVersion\Config' -Name 'Server' -ErrorAction SilentlyContinue)
+        [string[]]$ServerNames = @(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Veritas\NetBackup\CurrentVersion\Config' -Name 'Server' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty 'Server')
         $ServerNames | ForEach-Object -Process {
             [boolean]$portTest = (Check-IsPortOpen -DestinationServer $_ -Port 1556)
             If   ($portTest -eq $true)                   { $result.data += ($($script:lang['dt03']) -f $_.ToLower()) }
