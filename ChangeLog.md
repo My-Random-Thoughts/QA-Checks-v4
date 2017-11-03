@@ -6,4 +6,7 @@
 - `SEC-04` : Bug fix for wrong registry key
 - `SYS-12` : Added check for missing/empty registry key
 
+### 2017-11-03
+- `COM-04` : Bug fix for getting server names
+
 
