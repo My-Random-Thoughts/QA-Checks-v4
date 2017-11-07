@@ -9,4 +9,8 @@
 ### 2017-11-03
 - `COM-04` : Bug fix for getting server names
 
+### 2017-11-07
+- Added 7 news checks for SQL server scanning.  The PowerShell module SQLPS must be installed on the server you are scanning for these to work
+
+
 
