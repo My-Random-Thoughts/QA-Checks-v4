@@ -2057,7 +2057,15 @@ Function Display-MainForm
     $tab_t3_Pages_SelectedIndexChanged = {                    Update-NavButtons }
     $btn_t3_PrevTab_Click  = { $tab_t3_Pages.SelectedIndex--; Update-NavButtons }
     $btn_t3_NextTab_Click  = { $tab_t3_Pages.SelectedIndex++; Update-NavButtons }
-    $btn_t3_Complete_Click = { $tab_Pages.SelectedIndex = 3 }
+
+    $btn_t3_Complete_Click = {
+        $script:ListViewCollection | ForEach-Object -Process {
+            If (($_.Name.StartsWith('sql') -eq $True) -and ($_.Checked -eq $True)) {
+                If ($($script:settings.Modules) -notlike "*sqlps*") { $script:settings.Modules += "SQLPS`n" }
+            }
+        }
+        $tab_Pages.SelectedIndex = 3
+    }
 
     # Timer to enable the "Complete" button on Tab 3.  This helps to stop double-clicks 
     $tim_CompleteButton_Tick = {
@@ -2075,11 +2083,8 @@ Function Display-MainForm
 
         If (($btn_t4_Generate.Enabled -eq $True) -and ($AdditionalReturn -eq 'OK'))
         {
-            # 'Generate QA Script' is enabled therefore the settings have been saved.
-            # Show warning that is needs to be saved and compliled again.
-
-            [string]$msg  = "You have made additonal changes to the configuration`nPlease make sure you save these changes and generate a new QA script."
-            [System.Windows.Forms.MessageBox]::Show($MainFORM, $msg, 'Additional Options', 'OK', 'Warning')
+            # 'Generate QA Script' is enabled therefore the settings have been saved. Show warning that is needs to be saved and compliled again.
+            [System.Windows.Forms.MessageBox]::Show($MainFORM, $($script:ToolLangINI['additional']['Warning']), $($script:ToolLangINI['additional']['Button']), 'OK', 'Information')
         }
     }
 
