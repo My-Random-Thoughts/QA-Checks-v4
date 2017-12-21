@@ -1,4 +1,4 @@
-﻿<#
+<#
     DESCRIPTION: 
         Check relevant SCCM agent process is running, and that the correct port is open to the management server.
 
@@ -40,32 +40,34 @@ Function com-03-sccm-installed
 
     Try
     {
-        [string]  $gProcs =  (Get-Process      -Name 'CcmExec' -ErrorAction SilentlyContinue)
-        [psobject]$regVal = @(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\CCM' -Name ('SMSSLP', 'HttpsPort') -ErrorAction SilentlyContinue)
+        [string]  $gProcs  =  (Get-Process      -Name 'CcmExec' -ErrorAction SilentlyContinue)
+        [psobject]$regVal1 = @(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\CCM'             -Name ('SMSSLP', 'HttpsPort') -ErrorAction SilentlyContinue)
+        [psobject]$regVal2 = @(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\CCM' -Name ('SMSSLP', 'HttpsPort') -ErrorAction SilentlyContinue)
 
-        If (([string]::IsNullOrEmpty($gProcs) -eq $false) -and ([string]::IsNullOrEmpty($regVal) -eq $false))
+        If (([string]::IsNullOrEmpty($gProcs) -eq $false) -and ([string]::IsNullOrEmpty($regVal1) -eq $false) -and ([string]::IsNullOrEmpty($regVal1) -eq $false))
         {
-            If (([string]::IsNullOrEmpty($($regVal.SMSSLP)) -eq $false) -and ([string]::IsNullOrEmpty($($regVal.HttpsPort)) -eq $false))
-            {
-                [boolean]$portTest = (Check-IsPortOpen -DestinationServer $($regVal.SMSSLP) -Port $($regVal.HttpsPort))
-                If ($portTest -eq $true)
-                {
-                    $result.result  =    $script:lang['Pass']
-                    $result.message =    $script:lang['dt01']
-                    $result.data    = ($($script:lang['dt02']) -f $($regVal.HttpsPort), $($regVal.SMSSLP).ToLower())
-                }
-                Else
-                {
-                    $result.result  =    $script:lang['Fail']
-                    $result.message =    $script:lang['dt01']
-                    $result.data    = ($($script:lang['dt03']) -f $($regVal.HttpsPort), $($regVal.SMSSLP).ToLower())
-                }
-            }
+            If     (([string]::IsNullOrEmpty($($regVal1.SMSSLP)) -eq $false) -and ([string]::IsNullOrEmpty($($regVal1.HttpsPort)) -eq $false)) { [psobject]$regVal = $regVal1 }
+            ElseIf (([string]::IsNullOrEmpty($($regVal2.SMSSLP)) -eq $false) -and ([string]::IsNullOrEmpty($($regVal2.HttpsPort)) -eq $false)) { [psobject]$regVal = $regVal2 }
             Else
             {
                 $result.result  = $script:lang['Fail']
                 $result.message = $script:lang['dt01']
                 $result.data    = $script:lang['dt04']
+                Return $result
+            }
+
+            [boolean]$portTest = (Check-IsPortOpen -DestinationServer $($regVal.SMSSLP) -Port $($regVal.HttpsPort))
+            If ($portTest -eq $true)
+            {
+                $result.result  =    $script:lang['Pass']
+                $result.message =    $script:lang['dt01']
+                $result.data    = ($($script:lang['dt02']) -f $($regVal.HttpsPort), $($regVal.SMSSLP).ToLower())
+            }
+            Else
+            {
+                $result.result  =    $script:lang['Fail']
+                $result.message =    $script:lang['dt01']
+                $result.data    = ($($script:lang['dt03']) -f $($regVal.HttpsPort), $($regVal.SMSSLP).ToLower())
             }
         }
         Else
