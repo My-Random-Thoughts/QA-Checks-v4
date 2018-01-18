@@ -12,5 +12,6 @@
 ### 2017-11-07
 - Added 7 news checks for SQL server scanning.  The PowerShell module SQLPS must be installed on the server you are scanning for these to work
 
-
+### 2018-01-18
+- `SEC-18` : Added new check for the Spectre issue
 
