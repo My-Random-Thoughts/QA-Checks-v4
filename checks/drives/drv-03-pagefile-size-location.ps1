@@ -1,7 +1,7 @@
 ﻿<#
     DESCRIPTION: 
         Check the page file is located on the system drive and is a fixed size.  The default setting is 4096MB (4GB).
-        If the page file is larger a document detailing the tuning process used must exist and should follow Microsoft best tuning practices (http://support.microsoft.com/kb/2021748).
+        If the page file is larger a document detailing the tuning process used must exist and should follow Microsoft best tuning practices - http://support.microsoft.com/kb/2021748
 
     REQUIRED-INPUTS:
         FixedPageFileSize - Fixed size in MB of the page file|Integer
