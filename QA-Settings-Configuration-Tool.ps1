@@ -19,7 +19,7 @@
 #>
 
 Param ([string]$Language)
-Remove-Variable -Name * -Exclude 'Language' -ErrorAction SilentlyContinue
+Remove-Variable -Name    * -Exclude 'Language' -ErrorAction SilentlyContinue
 #Requires       -Version 4
 Set-StrictMode  -Version 2
 Clear-Host
@@ -1300,8 +1300,8 @@ Function Display-MainForm
 #region SCRIPTS-GENERAL
     $tab_Pages_SelectedIndexChanged = {
         If ($tab_Pages.SelectedIndex -eq 0) {  $btn_t1_RestoreINI.Visible = $True                   } Else {  $btn_t1_RestoreINI.Visible = $False }    # Show/Hide 'INI Tools' button
-        If ($tab_Pages.SelectedIndex -eq 1) { $lbl_t2_ChangesMade.Visible = $script:ShowChangesMade } Else { $lbl_t2_ChangesMade.Visible = $False }    # Show/Hide 'Selection Changes' Label
-        If ($tab_Pages.SelectedIndex -eq 3) {  $btn_t4_Additional.Visible = $True                   } Else {  $btn_t4_Additional.Visible = $False }    # Show/Hide 'Additional Options' button 
+        If ($tab_Pages.SelectedIndex -eq 1) { $lbl_t2_ChangesMade.Visible = $script:ShowChangesMade } Else { $lbl_t2_ChangesMade.Visible = $False }    # Show/Hide 'Selection Changes' label
+        If ($tab_Pages.SelectedIndex -eq 3) {  $btn_t4_Additional.Visible = $True                   } Else {  $btn_t4_Additional.Visible = $False }    # Show/Hide 'Additional Options' button
     }
     # ###########################################
 #endregion
@@ -1413,8 +1413,7 @@ Function Display-MainForm
         $MainFORM.Cursor = 'Default'
     }
 
-    Function lnk_t1_Language_Click
-    {
+    $lnk_t1_Language_Click = {
         $selLanguage = (Load-IniFile -Inputfile $("$script:scriptLocation\i18n\$($cmo_t1_Language.SelectedItem.Name).ini"))
         [System.Text.StringBuilder]$MessageBox = ''
         $MessageBox.AppendLine("$($selLanguage.Language.Name)")
@@ -1752,8 +1751,21 @@ Function Display-MainForm
 
     $lst_t2_SelectChecks_SelectedIndexChanged = {
         If ($lst_t2_SelectChecks.SelectedItems.Count -eq 1) {
-            $lbl_t2_Description.Text = (($lst_t2_SelectChecks.SelectedItems[0].SubItems[2].Text) -replace ('!n',"`n`n"))
+            $lnk_t2_Description.Text = (($lst_t2_SelectChecks.SelectedItems[0].SubItems[2].Text) -replace ('!n',"`n`n")) + ' '
+            $lnk_t2_Description.LinkArea = (New-Object -TypeName 'System.Windows.Forms.LinkArea'(0, 0))
+
+            If ($lnk_t2_Description.Text -like '*http*')
+            {
+                [int]$start  = $lnk_t2_Description.Text.IndexOf('http', 1)
+                [int]$length = $lnk_t2_Description.Text.IndexOf(' ', $start + 1) - $start
+                $lnk_t2_Description.LinkArea = (New-Object -TypeName 'System.Windows.Forms.LinkArea'($start, $length))
+            }
         }
+    }
+
+    $lnk_t2_Description_Click = {
+        [string]$link = $lnk_t2_Description.Text.SubString($($lnk_t2_Description.LinkArea.Start), $($lnk_t2_Description.LinkArea.Length))
+        Start-Process -FilePath $link
     }
 
     # Set focus to the exit button if there are no checks listed
@@ -2083,7 +2095,7 @@ Function Display-MainForm
 
         If (($btn_t4_Generate.Enabled -eq $True) -and ($AdditionalReturn -eq 'OK'))
         {
-            # 'Generate QA Script' is enabled therefore the settings have been saved. Show warning that is needs to be saved and compliled again.
+            # 'Generate QA Script' is enabled therefore the settings have been saved, show warning that is needs to be saved and compliled again.
             [System.Windows.Forms.MessageBox]::Show($MainFORM, $($script:ToolLangINI['additional']['Warning']), $($script:ToolLangINI['additional']['Button']), 'OK', 'Information')
         }
     }
@@ -2605,7 +2617,7 @@ Function ChangeLanguage
     $lnk_t1_Language.Text               = ($script:ToolLangINI['page1']['Translation'])
     $lnk_t1_Language.TextAlign          = 'MiddleLeft'
     $lnk_t1_Language.Enabled            = $False
-    $lnk_t1_Language.Add_Click({ lnk_t1_Language_Click })
+    $lnk_t1_Language.Add_Click($lnk_t1_Language_Click)
     $tab_Page1.Controls.Add($lnk_t1_Language)
 
     $btn_t1_Import                      = (New-Object -TypeName 'System.Windows.Forms.Button')
@@ -2691,16 +2703,17 @@ Function ChangeLanguage
     $lst_t2_SelectChecks.Add_SelectedIndexChanged($lst_t2_SelectChecks_SelectedIndexChanged)
     $tab_Page2.Controls.Add($lst_t2_SelectChecks)
 
-    $lbl_t2_Description                 = (New-Object -TypeName 'System.Windows.Forms.Label')
-    $lbl_t2_Description.BackColor       = 'Window'
-    $lbl_t2_Description.Location        = '475,  36'
-    $lbl_t2_Description.Size            = '277, 418'
-    $lbl_t2_Description.Padding         = '3, 3, 3, 3'    # Internal padding
-    $lbl_t2_Description.Text            = ''              # Description of the selected check - set via code
-    $lbl_t2_Description.TextAlign       = 'TopLeft'
-    $tab_Page2.Controls.Add($lbl_t2_Description)
+    $lnk_t2_Description                 = (New-Object -TypeName 'System.Windows.Forms.LinkLabel')
+    $lnk_t2_Description.BackColor       = 'Window'
+    $lnk_t2_Description.Location        = '475,  36'
+    $lnk_t2_Description.Size            = '277, 418'
+    $lnk_t2_Description.Padding         = '3, 3, 3, 3'    # Internal padding
+    $lnk_t2_Description.Text            = ''              # Description of the selected check - set via code
+    $lnk_t2_Description.TextAlign       = 'TopLeft'
+    $lnk_t2_Description.LinkArea        = (New-Object -TypeName 'System.Windows.Forms.LinkArea'(0, 0))
+    $lnk_t2_Description.Add_Click($lnk_t2_Description_Click)
+    $tab_Page2.Controls.Add($lnk_t2_Description)
 
-# SEARCH
     $lbl_t2_Search                      = (New-Object -TypeName 'System.Windows.Forms.Label')
     $lbl_t2_Search.Location             = '478, 457'
     $lbl_t2_Search.Size                 = '268,  17'
@@ -2743,7 +2756,6 @@ Function ChangeLanguage
     $chk_t2_Search.Enabled              = $False
     $chk_t2_Search.Add_CheckedChanged($chk_t2_Search_CheckedChanged)
     $tab_page2.Controls.Add($chk_t2_Search)
-# SEARCH
 
     $lbl_t2_SelectedCount               = (New-Object -TypeName 'System.Windows.Forms.Label')
     $lbl_t2_SelectedCount.Location      = '  9, 538'
