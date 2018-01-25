@@ -224,6 +224,9 @@ Function ComboIcons_OnDrawItem ([System.Windows.Forms.ComboBox]$Control)
     $e.DrawBackground()
     $e.DrawFocusRectangle()
 
+    If ($Control.Enabled -eq $False) { $Control.BackColor = [System.Drawing.SystemColors]::Control }
+    Else                             { $Control.BackColor = [System.Drawing.SystemColors]::Window  }
+
     [System.Drawing.Rectangle]$bounds = $e.Bounds
     If (($e.Index -gt -1) -and ($e.Index -lt $Control.Items.Count))
     {
@@ -1661,7 +1664,7 @@ Function Display-MainForm
 
         [string]   $FuncOLD  = ''
         [string]   $FuncNEW  = ''
-        [hashtable]$Sections = @{'acc'='Accounts';       # THIS SHOULD USE THE LANGUAGE SPECIFIC [sectionlookup] SECTION
+        [hashtable]$Sections = @{'acc'='Accounts';
                                  'com'='Compliance';
                                  'ctx'='Citrix';
                                  'drv'='Drives';
