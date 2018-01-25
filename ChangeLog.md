@@ -15,3 +15,5 @@
 ### 2018-01-18
 - `SEC-18` : Added new check for the Spectre issue
 
+### 2018-01-25
+- Minor changes to the QASCT to enable links in check descriptions
