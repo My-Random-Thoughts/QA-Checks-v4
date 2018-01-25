@@ -128,7 +128,7 @@ Function Save-File ([string]$InitialDirectory, [string]$Title, [string]$InitialF
 Function Load-ComboBoxIcon ([System.Windows.Forms.ComboBox]$ComboBox, [string[]]$Items, [string]$SelectedItem, [switch]$Clear, [string]$Type)
 {
     If ($Clear) { $ComboBox.Items.Clear() }
-    If ($Items[0] -eq 'Language File Missing')
+    If ($Items[0] -eq $($script:ToolLangINI['page1']['LangMissing']))
     {
         $newItem = (New-IconComboItem)
         $newItem.Icon = $img_MainForm.Images[3]; $newItem.Name = $Items[0]; $newItem.Text = $Items[0]
