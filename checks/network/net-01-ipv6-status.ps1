@@ -41,7 +41,7 @@ Function net-01-ipv6-status
     #... CHECK STARTS HERE ...#
 
     If ($script:chkValues['IPv6State'] -eq 'Disabled') { [string]$lookingFor = '4294967295'; [string]$stateGood = $script:lang['sta2']; [string]$stateBad = $script:lang['sta1'] }
-    Else                                                 { [string]$lookingFor =          '0'; [string]$stateGood = $script:lang['sta1']; [string]$stateBad = $script:lang['sta2'] }
+    Else                                               { [string]$lookingFor =          '0'; [string]$stateGood = $script:lang['sta1']; [string]$stateBad = $script:lang['sta2'] }
 
     Try
     {
