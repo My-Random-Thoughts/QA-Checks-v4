@@ -2125,6 +2125,13 @@ Function Display-MainForm
         }
     }
 
+    $txt_t4_ShortCode_TextChanged = {
+        [string]$mini = ''
+        [int]   $i    = $txt_t4_ShortCode.SelectionStart; $txt_t4_ShortCode.Text = $txt_t4_ShortCode.Text.ToUpper(); $txt_t4_ShortCode.SelectionStart = $i
+        If ($chk_t4_GenerateMini.Checked -eq $True) { $mini = '_MINI' }
+        $lbl_t4_CodeEg.Text = "QA_$($txt_t4_ShortCode.Text.Replace(' ', '-'))_v4.$(Get-Date -Format 'yy.MMdd')$mini.ps1"
+    }
+
     $btn_t4_Save_Click = {
         If (([string]::IsNullOrEmpty($txt_t4_ShortCode.Text) -eq $True) -or ([string]::IsNullOrEmpty($txt_t4_ReportTitle.Text) -eq $True))
         {
@@ -2222,9 +2229,11 @@ Function Display-MainForm
         $txt_t4_RT_Outer.Enabled     =  $False
 
         # Build Standard QA Script
+        [string]$mini = ''
         $lbl_t4_GenerateStatus.Text = $($script:ToolLangINI['page4']['Generating'])
         $lbl_t4_GenerateStatus.Refresh(); [System.Windows.Forms.Application]::DoEvents()
-        Invoke-Expression -Command "PowerShell -NoProfile -NonInteractive -Command {& '$script:scriptLocation\Compiler.ps1' -Settings '$(Split-Path -Path $script:saveFile -Leaf)' -Silent }"
+        If ($chk_t4_GenerateMini.Checked -eq $True) { $mini = '-Minimal' }
+        Invoke-Expression -Command "PowerShell -NoProfile -NonInteractive -Command {& '$script:scriptLocation\Compiler.ps1' $mini -Settings '$(Split-Path -Path $script:saveFile -Leaf)' -Silent }"
         $lbl_t4_GenerateStatus.Text = ''
 
         # Same code as in the compiler script
@@ -2989,10 +2998,7 @@ Function ChangeLanguage
         # Letter, numbers or separators only
         If ((-not [char]::IsLetterOrDigit($_.KeyChar)) -and (-not [char]::IsControl($_.KeyChar)) -and (-not [char]::IsSeparator($_.KeyChar)) -and ($_.KeyChar -ne [char]'-')) { $_.KeyChar = 0 }
     })
-    $txt_t4_ShortCode.Add_TextChanged({
-        [int]$i = $txt_t4_ShortCode.SelectionStart; $txt_t4_ShortCode.Text = $txt_t4_ShortCode.Text.ToUpper(); $txt_t4_ShortCode.SelectionStart = $i
-        $lbl_t4_CodeEg.Text = "QA_$($txt_t4_ShortCode.Text.Replace(' ', '-'))_v4.$(Get-Date -Format 'yy.MMdd').ps1"
-    })
+    $txt_t4_ShortCode.Add_TextChanged($txt_t4_ShortCode_TextChanged)
     $tab_Page4.Controls.Add($txt_t4_ShortCode)
 
     $txt_t4_SC_Outer                    = (New-Object -TypeName 'System.Windows.Forms.TextBox')
@@ -3064,6 +3070,7 @@ Function ChangeLanguage
     $chk_t4_GenerateMini.Text           = ($script:ToolLangINI['page4']['GenerateMini'])
     $chk_t4_GenerateMini.Checked        = $False
     $chk_t4_GenerateMini.Enabled        = $False
+    $chk_t4_GenerateMini.Add_CheckedChanged($txt_t4_ShortCode_TextChanged) 
     $tab_Page4.Controls.Add($chk_t4_GenerateMini)
 
     $lbl_t4_GenerateStatus              = (New-Object -TypeName 'System.Windows.Forms.Label')
