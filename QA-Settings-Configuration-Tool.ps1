@@ -2237,11 +2237,11 @@ Function Display-MainForm
         $btn_t4_Save.Enabled         =  $True
         $btn_t4_Additional.Enabled   =  $True
         $btn_t4_Generate.Enabled     =  $True
-        $chk_t4_GenerateMini.Enabled =  $True
         $txt_t4_ShortCode.Enabled    =  $True
         $txt_t4_ReportTitle.Enabled  =  $True
         $txt_t4_SC_Outer.Enabled     =  $True
         $txt_t4_RT_Outer.Enabled     =  $True
+        If ($(Update-SelectedCount) -le 7) { $chk_t4_GenerateMini.Enabled = $True } Else { $chk_t4_GenerateMini.Enabled = $False }
         $MainFORM.Cursor             = 'Default'
     }
 #endregion
