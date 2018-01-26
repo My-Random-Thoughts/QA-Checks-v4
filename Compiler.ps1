@@ -1,4 +1,4 @@
-﻿<#
+<#
     ###############################################################################################
 
       SERVER QA SCRIPTS
@@ -18,8 +18,8 @@
     ###############################################################################################
 #>
 
-Param ([string]$Settings, [switch]$Silent = $false)
-Remove-Variable -Name * -Exclude ('Settings', 'Silent') -ErrorAction SilentlyContinue
+Param ([string]$Settings, [switch]$Silent = $false, [switch]$Minimal = $false)
+Remove-Variable -Name * -Exclude ('Settings', 'Silent', 'Minimal') -ErrorAction SilentlyContinue
 #Requires       -Version 4
 Set-StrictMode  -Version 2
 
@@ -285,8 +285,11 @@ If ($Settings -ne 'default-settings') {
     If ($shortcode -eq '_') { $shortcode = 'UNKNOWN_' }
 }
 
+[string]$mini = ''
+If ($Minimal -eq $True) { $mini = '_MINI' }
+
 # Remove previous version if required
-[string]$outPath = "$path\QA_$shortcode$version.ps1"
+[string]$outPath = "$path\QA_$shortcode$version$mini.ps1"
 If (Test-Path -Path $outPath) { Try { Remove-Item $outPath -Force } Catch { } }
 
 Write-Colr  '  Compiling ', $qaChecks.Count, ' checks using settings file ', $Settings.ToUpper() -Colour White, Yellow, White, Yellow
@@ -333,101 +336,111 @@ Write-Host2 $B -NoNewline -ForegroundColor Cyan                                 
 # Add each check into the script
 ForEach ($qa In ($qaChecks | Sort-Object -Property 'Name'))
 {
-    [string]$CheckHeader = ((Get-Content -Path ($qa.FullName) -TotalCount 50 -ReadCount 50) -join "`n")
-
-    [void]$qaScript.AppendLine("`$$($qa.Name.Substring(0, 6).Replace('-','')) = {")
-    [void]$qaScript.AppendLine($shared)
-    [void]$qaScript.AppendLine('$script:lang      = @{}')
-    [void]$qaScript.AppendLine('$script:chkValues = @{}')
-
-    [string]$checkName = ($qa.Name).Substring(0, 6).Replace('-','')
-    If ($iniSettings["$checkName-skip"]) { $checkName += '-skip' }
-
-    # Add each checks settings
-    Try
+    [string]$checkName = ($qa.BaseName).Substring(0, 6).Replace('-','')
+    If (($Minimal -eq $True) -and (-not $iniSettings["$checkName"]))
     {
-        ForEach ($key In ($iniSettings[$checkName].Keys | Sort-Object))
-        {
-            [string]$value = ($iniSettings[$checkName][$key]).ToString()
-            If ($value -eq '') { $value = "''" }
-            [string]$appSetting = ('$script:chkValues[' + "'{0}'] = {1}" -f $key, ($value.Trim()))
-            [void]$qaScript.AppendLine($appSetting)
-        }
+        # Skip adding check
+        Write-Host2 $B -NoNewline -ForegroundColor DarkGreen                                       # Each GREEN blob for adding a QA CHECK
     }
-    Catch
+    Else
     {
-        # Missing INI Section for this check, read from the check script itself
-        $regExV = [RegEx]::Match($CheckHeader, "DEFAULT-VALUES:((?:.|\s)+?)(?:(?:[A-Z\- ]+:\n)|(?:#>))")
-        [string[]]$Values = ($regExV.Groups[1].Value.Trim()).Split("`n")
-        If (([string]::IsNullOrEmpty($Values) -eq $false) -and ($Values -ne 'None'))
-        {
-            ForEach ($EachValue In $Values)
-            {
-                [string]$key   = ($EachValue -split ' = ')[0].Trim()
-                [string]$value = ($EachValue -split ' = ')[1].Trim()
-                If ($value -eq '') { $value = "''" }
+        [string]$CheckHeader = ((Get-Content -Path ($qa.FullName) -TotalCount 50 -ReadCount 50) -join "`n")
 
+        [void]$qaScript.AppendLine("`$$($qa.Name.Substring(0, 6).Replace('-','')) = {")
+        [void]$qaScript.AppendLine($shared)
+        [void]$qaScript.AppendLine('$script:lang      = @{}')
+        [void]$qaScript.AppendLine('$script:chkValues = @{}')
+
+        [string]$checkName = ($qa.Name).Substring(0, 6).Replace('-','')
+        If ($iniSettings["$checkName-skip"]) { $checkName += '-skip' }
+
+        # Add each checks settings
+        Try
+        {
+            ForEach ($key In ($iniSettings[$checkName].Keys | Sort-Object))
+            {
+                [string]$value = ($iniSettings[$checkName][$key]).ToString()
+                If ($value -eq '') { $value = "''" }
                 [string]$appSetting = ('$script:chkValues[' + "'{0}'] = {1}" -f $key, ($value.Trim()))
                 [void]$qaScript.AppendLine($appSetting)
             }
         }
-    }
-
-    # Add language specific strings to each check
-    $checkName = $checkName.TrimEnd('-skip')
-    [void]$qaScript.Append((Write-LangSectionKeys -Section 'common'))
-    [void]$qaScript.Append((Write-LangSectionKeys -Section $checkName))
-
-    # Add the check itself
-    [void]$qaScript.AppendLine(((Get-Content -Path ($qa.FullName)) -join "`n"))
-
-    [hashtable]$addVal = @{ p=''; w=''; f=''; m=''; n='' }
-    [System.Text.StringBuilder]$xmlHelp = '<xml>'
-    ForEach ($key In ($lngStrings[$checkName].Keys | Sort-Object))
-    {
-        [string]$value = ($lngStrings[$checkName][$key]).Trim("'")
-        Switch -Wildcard ($key)
+        Catch
         {
-            'desc' {                                                                 [void]$xmlHelp.Append("<description>$value</description>"); Break }
-            'appl' { $value = ($lngStrings['applyto'][$value.ToString()]).Trim("'"); [void]$xmlHelp.Append("<applies>$value</applies>");         Break }
+            # Missing INI Section for this check, read from the check script itself
+            $regExV = [RegEx]::Match($CheckHeader, "DEFAULT-VALUES:((?:.|\s)+?)(?:(?:[A-Z\- ]+:\n)|(?:#>))")
+            [string[]]$Values = ($regExV.Groups[1].Value.Trim()).Split("`n")
+            If (([string]::IsNullOrEmpty($Values) -eq $false) -and ($Values -ne 'None'))
+            {
+                ForEach ($EachValue In $Values)
+                {
+                    [string]$key   = ($EachValue -split ' = ')[0].Trim()
+                    [string]$value = ($EachValue -split ' = ')[1].Trim()
+                    If ($value -eq '') { $value = "''" }
 
-            'p0*'  { $addVal.p += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }    # Collect any result strings
-            'w0*'  { $addVal.w += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }
-            'f0*'  { $addVal.f += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }
-            'm0*'  { $addVal.m += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }
-            'n0*'  { $addVal.n += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }
-
-            Default { }    # Ignore everything else
+                    [string]$appSetting = ('$script:chkValues[' + "'{0}'] = {1}" -f $key, ($value.Trim()))
+                    [void]$qaScript.AppendLine($appSetting)
+                }
+            }
         }
-    }
 
-    # Add result strings to help XML
-    If ([string]::IsNullOrEmpty($addVal.p) -eq $false) { [void]$xmlHelp.Append("<pass>$($addVal.p)</pass>") }
-    If ([string]::IsNullOrEmpty($addVal.w) -eq $false) { [void]$xmlHelp.Append("<warning>$($addVal.w)</warning>") }
-    If ([string]::IsNullOrEmpty($addVal.f) -eq $false) { [void]$xmlHelp.Append("<fail>$($addVal.f)</fail>") }
-    If ([string]::IsNullOrEmpty($addVal.m) -eq $false) { [void]$xmlHelp.Append("<manual>$($addVal.m)</manual>") }
-    If ([string]::IsNullOrEmpty($addVal.n) -eq $false) { [void]$xmlHelp.Append("<na>$($addVal.n)</na>") }
+        # Add language specific strings to each check
+        $checkName = $checkName.TrimEnd('-skip')
+        [void]$qaScript.Append((Write-LangSectionKeys -Section 'common'))
+        [void]$qaScript.Append((Write-LangSectionKeys -Section $checkName))
 
-    [void]$xmlHelp.Append('</xml>')    # Not "AppendLine()"
-    [void]$qaHelp.AppendLine("`$script:qahelp['$checkName']='$($xmlHelp.ToString())'")
+        # Add the check itself
+        [void]$qaScript.AppendLine(((Get-Content -Path ($qa.FullName)) -join "`n"))
 
-    # Add each required function
-    $regExR = [RegEx]::Match($CheckHeader, "REQUIRED-FUNCTIONS:((?:.|\s)+?)(?:(?:[A-Z\- ]+:\n)|(?:#>))")
-    [string[]]$sectionValue = ($regExR.Groups[1].Value.Trim()).Split("`n")
-    If (([string]::IsNullOrEmpty($sectionValue) -eq $false) -and ($sectionValue -notlike '*None*')) {
-        ForEach ($function In $sectionValue) {
-            [void]$qaScript.AppendLine(((Get-Content -Path "$path\engine\$($function.Trim()).ps1") -join "`n"))
+        [hashtable]$addVal = @{ p=''; w=''; f=''; m=''; n='' }
+        [System.Text.StringBuilder]$xmlHelp = '<xml>'
+        ForEach ($key In ($lngStrings[$checkName].Keys | Sort-Object))
+        {
+            [string]$value = ($lngStrings[$checkName][$key]).Trim("'")
+            Switch -Wildcard ($key)
+            {
+                'desc' {                                                                 [void]$xmlHelp.Append("<description>$value</description>"); Break }
+                'appl' { $value = ($lngStrings['applyto'][$value.ToString()]).Trim("'"); [void]$xmlHelp.Append("<applies>$value</applies>");         Break }
+
+                'p0*'  { $addVal.p += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }    # Collect any result strings
+                'w0*'  { $addVal.w += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }
+                'f0*'  { $addVal.f += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }
+                'm0*'  { $addVal.m += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }
+                'n0*'  { $addVal.n += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }
+
+                Default { }    # Ignore everything else
+            }
         }
+
+        # Add result strings to help XML
+        If ([string]::IsNullOrEmpty($addVal.p) -eq $false) { [void]$xmlHelp.Append("<pass>$($addVal.p)</pass>") }
+        If ([string]::IsNullOrEmpty($addVal.w) -eq $false) { [void]$xmlHelp.Append("<warning>$($addVal.w)</warning>") }
+        If ([string]::IsNullOrEmpty($addVal.f) -eq $false) { [void]$xmlHelp.Append("<fail>$($addVal.f)</fail>") }
+        If ([string]::IsNullOrEmpty($addVal.m) -eq $false) { [void]$xmlHelp.Append("<manual>$($addVal.m)</manual>") }
+        If ([string]::IsNullOrEmpty($addVal.n) -eq $false) { [void]$xmlHelp.Append("<na>$($addVal.n)</na>") }
+
+        [void]$xmlHelp.Append('</xml>')    # Not "AppendLine()"
+        [void]$qaHelp.AppendLine("`$script:qahelp['$checkName']='$($xmlHelp.ToString())'")
+
+        # Add each required function
+        $regExR = [RegEx]::Match($CheckHeader, "REQUIRED-FUNCTIONS:((?:.|\s)+?)(?:(?:[A-Z\- ]+:\n)|(?:#>))")
+        [string[]]$sectionValue = ($regExR.Groups[1].Value.Trim()).Split("`n")
+        If (([string]::IsNullOrEmpty($sectionValue) -eq $false) -and ($sectionValue -notlike '*None*')) {
+            ForEach ($function In $sectionValue) {
+                [void]$qaScript.AppendLine(((Get-Content -Path "$path\engine\$($function.Trim()).ps1") -join "`n"))
+            }
+        }
+
+        # Add the check call
+        [void]$qaScript.AppendLine('')
+        [void]$qaScript.AppendLine($($qa.BaseName))
+
+        # Complete this check
+        [void]$qaScript.AppendLine('}')
+        Write-Host2 $B -NoNewline -ForegroundColor Green                                           # Each GREEN blob for adding a QA CHECK
     }
-
-    # Add the check call
-    [void]$qaScript.AppendLine('')
-    [void]$qaScript.AppendLine($($qa.BaseName))
-
-    # Complete this check
-    [void]$qaScript.AppendLine('}')
-    Write-Host2 $B -NoNewline -ForegroundColor Green                                               # Each GREEN blob for adding a QA CHECK
 }
+
 [void]$qaScript.AppendLine(''.PadLeft(190, '#'))
 [void]$qaScript.AppendLine('#endregion')
 
