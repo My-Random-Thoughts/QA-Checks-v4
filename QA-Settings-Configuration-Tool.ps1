@@ -1763,7 +1763,7 @@ Function Display-MainForm
             $lnk_t2_Description.LinkArea = (New-Object -TypeName 'System.Windows.Forms.LinkArea'(0, 0))
 
             # Search for and enable any links within descriptions (only one per description)
-            If ($lnk_t2_Description.Text -like 'http')
+            If ($lnk_t2_Description.Text -like '*http*')
             {
                 [int]$start  = $lnk_t2_Description.Text.IndexOf('http', 1)
                 [int]$length = $lnk_t2_Description.Text.IndexOf(' ', $start + 1) - $start
