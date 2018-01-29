@@ -40,14 +40,14 @@ Function com-03-sccm-installed
 
     Try
     {
-        [string]  $gProcs  =  (Get-Process      -Name 'CcmExec' -ErrorAction SilentlyContinue)
-        [psobject]$regVal1 = @(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\CCM'             -Name ('SMSSLP', 'HttpsPort') -ErrorAction SilentlyContinue)
-        [psobject]$regVal2 = @(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\CCM' -Name ('SMSSLP', 'HttpsPort') -ErrorAction SilentlyContinue)
+        [object]  $gProcs  =  (Get-Process      -Name 'CcmExec'                                                                -ErrorAction SilentlyContinue)
+        [object[]]$regVal1 = @(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\CCM'             -Name ('SMSSLP', 'HttpsPort') -ErrorAction SilentlyContinue)
+        [object[]]$regVal2 = @(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\CCM' -Name ('SMSSLP', 'HttpsPort') -ErrorAction SilentlyContinue)
 
-        If (([string]::IsNullOrEmpty($gProcs) -eq $false) -and ([string]::IsNullOrEmpty($regVal1) -eq $false) -and ([string]::IsNullOrEmpty($regVal2) -eq $false))
+        If (([string]::IsNullOrEmpty($gProcs) -eq $false) -and (([string]::IsNullOrEmpty($regVal1) -eq $false) -or ([string]::IsNullOrEmpty($regVal2) -eq $false)))
         {
-            If     (([string]::IsNullOrEmpty($($regVal1.SMSSLP)) -eq $false) -and ([string]::IsNullOrEmpty($($regVal1.HttpsPort)) -eq $false)) { [psobject]$regVal = $regVal1 }
-            ElseIf (([string]::IsNullOrEmpty($($regVal2.SMSSLP)) -eq $false) -and ([string]::IsNullOrEmpty($($regVal2.HttpsPort)) -eq $false)) { [psobject]$regVal = $regVal2 }
+            If     (([string]::IsNullOrEmpty($($regVal1.SMSSLP)) -eq $false) -and ([string]::IsNullOrEmpty($($regVal1.HttpsPort)) -eq $false)) { [object[]]$regVal = $regVal1 }
+            ElseIf (([string]::IsNullOrEmpty($($regVal2.SMSSLP)) -eq $false) -and ([string]::IsNullOrEmpty($($regVal2.HttpsPort)) -eq $false)) { [object[]]$regVal = $regVal2 }
             Else
             {
                 $result.result  = $script:lang['Fail']
