@@ -161,6 +161,17 @@ Function ShowMenu ([array]$menuItems, [string]$menuTitle)
 Function Write-LangSectionKeys ([string]$Section)
 {
     Try {
+        # Check keys exist (error-checking for new checks)
+        [boolean]$keysExist = $false
+        Try { [object]$keys = ($lngStrings[$Section].Keys); $keysExist = $true } Catch {}
+        If ($keysExist -eq $false)
+        {
+            $lngStrings[$Section] = @{}
+            $lngStrings[$Section]['Name'] = "'!! Missing Language Text !!'"
+            $lngStrings[$Section]['Desc'] = "'Make sure you have entries in the i18n language file for this check'"
+            $lngStrings[$Section]['Appl'] = 'ALL'
+        }
+        
         $SectionInsert = (New-Object 'System.Text.StringBuilder')
         ForEach ($key In ($lngStrings[$Section].Keys | Sort-Object))
         {
