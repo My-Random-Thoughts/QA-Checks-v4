@@ -1,4 +1,4 @@
-﻿<#
+<#
     DESCRIPTION: 
         Check sentinel monitoring agent is installed, and that the correct port is open to the management server.
 
@@ -38,50 +38,59 @@ Function com-07-sentinel-agent-installed
 
     #... CHECK STARTS HERE ...#
 
-    [object]$verCheck = (Check-Software -DisplayName 'NetIQ Sentinel Agent')
-    If ($verCheck -eq '-1') { Throw $script:lang['trw1'] }
-
-    If ([string]::IsNullOrEmpty($verCheck) -eq $false)
+    Try
     {
-        $result.result  =    $script:lang['Pass']
-        $result.message =    $script:lang['p001']
-        $result.data    = ($($script:lang['dt01']) -f $verCheck.Version)
+        [object]$verCheck = (Check-Software -DisplayName 'NetIQ Sentinel Agent')
+        If ($verCheck -eq '-1') { Throw $script:lang['trw1'] }
 
-        Try
+        If ([string]::IsNullOrEmpty($verCheck) -eq $false)
         {
-            [string]  $regPath = 'HKLM:\SOFTWARE\Wow6432Node\NetIQ\Security Manager\Configurations'
-            [string[]]$gChldI  = @((Get-ChildItem -Path $regPath -ErrorAction SilentlyContinue).Name)
+            $result.result  =    $script:lang['Pass']
+            $result.message =    $script:lang['p001']
+            $result.data    = ($($script:lang['dt01']) -f $verCheck.Version)
 
-            If (([string]::IsNullOrEmpty($gChldI) -eq $false) -and ($gChldI.Count -gt 0))
+            Try
             {
-                0..9 | ForEach-Object -Process {
-                    [string]$cons = (Get-ItemProperty -Path "$regPath\$($gChldI[0].Split('\')[-1])\Operations\Agent\Consolidators" -Name ("Consolidator $_ Host", "Consolidator $_ Port") -ErrorAction SilentlyContinue)
-                    If ([string]::IsNullOrEmpty($cons) -eq $false)
-                    {
-                        [boolean]$portTest = (Check-IsPortOpen -DestinationServer $($cons."Consolidator $_ Host") -Port $($cons."Consolidator $_ Port"))
-                        If ($portTest -eq $true) {
-                            $result.result = $script:lang['Pass']
-                            $result.data += ($($script:lang['dt02']) -f $($cons."Consolidator $_ Port"), $($cons."Consolidator $_ Host").ToLower())
-                        }
-                        Else {
-                            $result.result = $script:lang['Fail']
-                            $result.data += ($($script:lang['dt03']) -f $($cons."Consolidator $_ Port"), $($cons."Consolidator $_ Host").ToLower())
+                [string]  $regPath = 'HKLM:\SOFTWARE\Wow6432Node\NetIQ\Security Manager\Configurations'
+                [string[]]$gChldI  = @((Get-ChildItem -Path $regPath -ErrorAction SilentlyContinue).Name)
+
+                If (([string]::IsNullOrEmpty($gChldI) -eq $false) -and ($gChldI.Count -gt 0))
+                {
+                    0..9 | ForEach-Object -Process {
+                        [string]$cons = (Get-ItemProperty -Path "$regPath\$($gChldI[0].Split('\')[-1])\Operations\Agent\Consolidators" -Name ("Consolidator $_ Host", "Consolidator $_ Port") -ErrorAction SilentlyContinue)
+                        If ([string]::IsNullOrEmpty($cons) -eq $false)
+                        {
+                            [boolean]$portTest = (Check-IsPortOpen -DestinationServer $($cons."Consolidator $_ Host") -Port $($cons."Consolidator $_ Port"))
+                            If ($portTest -eq $true) {
+                                $result.result = $script:lang['Pass']
+                                $result.data += ($($script:lang['dt02']) -f $($cons."Consolidator $_ Port"), $($cons."Consolidator $_ Host").ToLower())
+                            }
+                            Else {
+                                $result.result = $script:lang['Fail']
+                                $result.data += ($($script:lang['dt03']) -f $($cons."Consolidator $_ Port"), $($cons."Consolidator $_ Host").ToLower())
+                            }
                         }
                     }
                 }
             }
+            Catch
+            {
+                $result.result  = $script:lang['Error']
+                $result.message = $script:lang['Script-Error']
+                $result.data    = $_.Exception.Message
+            }
         }
-        Catch
+        Else
         {
-            $result.result  = $script:lang['Error']
-            $result.message = $script:lang['Script-Error']
-            $result.data    = $_.Exception.Message
+            $result.result  = $script:lang['Fail']
+            $result.message = $script:lang['f001']
         }
     }
-    Else
+    Catch
     {
-        $result.result  = $script:lang['Fail']
-        $result.message = $script:lang['f001']
+        $result.result  = $script:lang['Error']
+        $result.message = $script:lang['Script-Error']
+        $result.data    = $_.Exception.Message
     }
 
     Return $result
