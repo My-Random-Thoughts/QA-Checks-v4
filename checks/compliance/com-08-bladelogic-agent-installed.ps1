@@ -1,4 +1,4 @@
-﻿<#
+<#
     DESCRIPTION: 
         Check BladeLogic monitoring agent is installed, and that the correct port is listening.
         Also check that the USERS.LOCAL file is configured correctly.
@@ -46,68 +46,77 @@ Function com-08-bladelogic-agent-installed
 
     #... CHECK STARTS HERE ...#
 
-    [object]$verCheck = (Check-Software -DisplayName 'BMC BladeLogic Server Automation RSCD Agent')
-    If ($verCheck -eq '-1') { Throw $script:lang['trw1'] }
-
-    If ([string]::IsNullOrEmpty($verCheck) -eq $false)
+    Try
     {
-        $result.result  =    $script:lang['Pass']
-        $result.message =    $script:lang['p001']
-        $result.data    = ($($script:lang['dt01']) -f $verCheck.Version)
+        [object]$verCheck = (Check-Software -DisplayName 'BMC BladeLogic Server Automation RSCD Agent')
+        If ($verCheck -eq '-1') { Throw $script:lang['trw1'] }
 
-        Try
+        If ([string]::IsNullOrEmpty($verCheck) -eq $false)
         {
-            # Check for listening port...
-            [boolean]$found = $false
-            $TCPProperties = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties()
-            [System.Net.IPEndPoint[]]$Connections = $TCPProperties.GetActiveTcpListeners()
-            $Connections | ForEach-Object -Process { If ($($_.Port) -eq $script:chkValues['ListeningPort']) { $found = $true } }
+            $result.result  =    $script:lang['Pass']
+            $result.message =    $script:lang['p001']
+            $result.data    = ($($script:lang['dt01']) -f $verCheck.Version)
 
-            If ($found -eq $true) {
-                $result.data   += ($($script:lang['dt02']) -f $script:chkValues['ListeningPort'])
-            }
-            Else {
-                $result.result  =    $script:lang['Fail']
-                $result.data   += ($($script:lang['dt03']) -f $script:chkValues['ListeningPort'])
-            }
-
-            # Check USER.LOCAL configuration file
-            If ((Test-Path -Path "$env:windir\rsc\users.local") -eq $true)
+            Try
             {
-                [boolean] $found     = $false
-                [string[]]$usersfile = (Get-Content -Path "$env:windir\rsc\users.local")
-                $usersfile | ForEach-Object -Process {
-                    If (($_.StartsWith($script:chkValues['CustomerCode']) -eq $true) -and 
-                          ($_.EndsWith($script:chkValues['LocalAccount']) -eq $true)) { $found = $true }
+                # Check for listening port...
+                [boolean]$found = $false
+                $TCPProperties = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties()
+                [System.Net.IPEndPoint[]]$Connections = $TCPProperties.GetActiveTcpListeners()
+                $Connections | ForEach-Object -Process { If ($($_.Port) -eq $script:chkValues['ListeningPort']) { $found = $true } }
+
+                If ($found -eq $true) {
+                    $result.data   += ($($script:lang['dt02']) -f $script:chkValues['ListeningPort'])
+                }
+                Else {
+                    $result.result  =    $script:lang['Fail']
+                    $result.data   += ($($script:lang['dt03']) -f $script:chkValues['ListeningPort'])
                 }
 
-                If ($found -eq $true)
+                # Check USER.LOCAL configuration file
+                If ((Test-Path -Path "$env:windir\rsc\users.local") -eq $true)
                 {
-                    $result.data += $script:lang['dt04']
+                    [boolean] $found     = $false
+                    [string[]]$usersfile = (Get-Content -Path "$env:windir\rsc\users.local")
+                    $usersfile | ForEach-Object -Process {
+                        If (($_.StartsWith($script:chkValues['CustomerCode']) -eq $true) -and 
+                              ($_.EndsWith($script:chkValues['LocalAccount']) -eq $true)) { $found = $true }
+                    }
+
+                    If ($found -eq $true)
+                    {
+                        $result.data += $script:lang['dt04']
+                    }
+                    Else
+                    {
+                        $result.result  = $script:lang['Fail']
+                        $result.data   += $script:lang['f001']
+                    }
                 }
                 Else
                 {
                     $result.result  = $script:lang['Fail']
-                    $result.data   += $script:lang['f001']
+                    $result.data   += $script:lang['f002']
                 }
             }
-            Else
+            Catch
             {
-                $result.result  = $script:lang['Fail']
-                $result.data   += $script:lang['f002']
+                $result.result  = $script:lang['Error']
+                $result.message = $script:lang['Script-Error']
+                $result.data    = $_.Exception.Message
             }
         }
-        Catch
+        Else
         {
-            $result.result  = $script:lang['Error']
-            $result.message = $script:lang['Script-Error']
-            $result.data    = $_.Exception.Message
+            $result.result  = $script:lang['Fail']
+            $result.message = $script:lang['f003']
         }
     }
-    Else
+    Catch
     {
-        $result.result  = $script:lang['Fail']
-        $result.message = $script:lang['f003']
+        $result.result  = $script:lang['Error']
+        $result.message = $script:lang['Script-Error']
+        $result.data    = $_.Exception.Message
     }
 
     Return $result
