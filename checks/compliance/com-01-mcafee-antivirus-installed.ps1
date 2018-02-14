@@ -1,4 +1,4 @@
-﻿<#
+<#
     DESCRIPTION: 
         Check that McAfee anti-virus is installed and virus definitions are up to date.
 
@@ -34,6 +34,7 @@
 
     REQUIRED-FUNCTIONS:
         Check-Software
+        Check-IsPortOpen
 #>
 
 Function com-01-mcafee-antivirus-installed
@@ -70,7 +71,9 @@ Function com-01-mcafee-antivirus-installed
             [datetime]$dtVal = '01/01/1901'
                       $dtVal = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\McAfee\AvEngine'                                              -Name  'AVDatDate'                 -ErrorAction SilentlyContinue).'AVDatDate'
             [psobject]$apVal = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\McAfee\SystemCore\VSCore\On Access Scanner\BehaviourBlocking' -Name ('APEnabled', 'APInstalled') -ErrorAction SilentlyContinue)
+            [string]  $msVal = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\Network Associates\ePolicy Orchestrator\Agent'                -Name  'ePOServerList'             -ErrorAction SilentlyContinue).'ePOServerList'
 
+            # Check DAT date
             If ($dtVal -ne '01/01/1901')
             {
                 $days = ((Get-Date) - $dtVal).Days
@@ -93,6 +96,7 @@ Function com-01-mcafee-antivirus-installed
                 $result.message += $script:lang['f003']
             }
 
+            # Check OAS
             If ([string]::IsNullOrEmpty($apVal) -eq $false)
             {
                 If ((($apVal.APEnabled) -eq 1) -and (($apVal.APInstalled) -eq 1)) { $result.message += $script:lang['p003'] }
@@ -104,6 +108,21 @@ Function com-01-mcafee-antivirus-installed
                 If     ($apVal.APEnabled   -ne 1) { $result.data += $script:lang['dt04'] }
                 ElseIf ($apVal.APInstalled -ne 1) { $result.data += $script:lang['dt05'] }
                 Else   {}
+            }
+
+            # Check EPO access
+            If ([string]::IsNullOrEmpty($msVal) -eq $false)
+            {
+                $msVal.Trim(';').Split(';') | ForEach -Process {
+                    [boolean]$portTest = (Check-IsPortOpen -DestinationServer $($_.Split('|')[0]) -Port ($($_.Split('|')[2]) -as [int]))
+                    If ($portTest -eq $true) { $result.data += ($($script:lang['dt06']) -f $($_.Split('|')[2]), $($_.Split('|')[0])) }
+                    Else                     { $result.data += ($($script:lang['dt07']) -f $($_.Split('|')[2]), $($_.Split('|')[0])); $result.result = $script:lang['Fail'] }
+                }
+            }
+            Else
+            {
+                $result.result   = $script:lang['Fail']
+                $result.message += $script:lang['f006']
             }
         }
         Else
