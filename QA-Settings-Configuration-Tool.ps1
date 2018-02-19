@@ -22,7 +22,7 @@ Param ([string]$Language)
 Remove-Variable -Name    * -Exclude 'Language' -ErrorAction SilentlyContinue
 #Requires       -Version 4
 Set-StrictMode  -Version 2
-Clear-Host
+#Clear-Host
 
 # IMG_MAINFORM Icon List
 #    0: Gear      : (green)      - default-settings
@@ -52,6 +52,7 @@ Clear-Host
 
 [hashtable]$script:languageINI      = @{}
 [hashtable]$script:ToolLangINI      = @{}
+[boolean]  $script:DisabledHidden   = $False
 [object]   $script:SelectedLanguage = $null
 [string]   $script:SelectedToolLang = ''
 [string]   $script:regExMatch       = "((?:.|\s)+?)(?:(?:[A-Z\- ]+:\n)|(?:#>))"    # Used for all RegEx search matching
@@ -1270,8 +1271,8 @@ Function Display-MainForm
     }
 
     $MainFORM_FormClosing = [System.Windows.Forms.FormClosingEventHandler] {
-        $quit = [System.Windows.Forms.MessageBox]::Show($MainFORM, $($script:ToolLangINI['exit']['Message']), $script:toolName, 'YesNo', 'Question')
-        If ($quit -eq 'No') { $_.Cancel = $True }
+        [System.Windows.Forms.DialogResult]$quit = [System.Windows.Forms.MessageBox]::Show($MainFORM, $($script:ToolLangINI['exit']['Message']), $script:toolName, 'YesNo', 'Question')
+        If ($quit -eq [System.Windows.Forms.DialogResult]::No) { $_.Cancel = $True }
     }
 
     $Form_Cleanup_FormClosed = {
@@ -1305,10 +1306,10 @@ Function Display-MainForm
 #region FORM Scripts
 #region SCRIPTS-GENERAL
     $tab_Pages_SelectedIndexChanged = {
-        If ($tab_Pages.SelectedIndex -eq 0) { $pic_t1_RestoreHelp.Visible = $True                   } Else { $pic_t1_RestoreHelp.Visible = $False }    # Show/Hide 'INI Tools' button
-        If ($tab_Pages.SelectedIndex -eq 1) { $lbl_t2_ChangesMade.Visible = $script:ShowChangesMade } Else { $lbl_t2_ChangesMade.Visible = $False }    # Show/Hide 'Selection Changes' label
-    #   If ($tab_Pages.SelectedIndex -eq 2) {                                                       } Else {                                      }    # Show/Hide ''
-        If ($tab_Pages.SelectedIndex -eq 3) {  $btn_t4_Additional.Visible = $True                   } Else {  $btn_t4_Additional.Visible = $False }    # Show/Hide 'Additional Options' button
+        If ($tab_Pages.SelectedIndex -eq 0) {  $pic_t1_RestoreHelp.Visible = $True                   } Else {  $pic_t1_RestoreHelp.Visible = $False }    # Show/Hide 'INI Tools' button
+        If ($tab_Pages.SelectedIndex -eq 1) {  $lbl_t2_ChangesMade.Visible = $script:ShowChangesMade } Else {  $lbl_t2_ChangesMade.Visible = $False }    # Show/Hide 'Selection Changes' label
+        If ($tab_Pages.SelectedIndex -eq 2) { $btn_t3_HideDisabled.Visible = $True                   } Else { $btn_t3_HideDisabled.Visible = $False }    # Show/Hide 'Hide Disabled Checks' button
+        If ($tab_Pages.SelectedIndex -eq 3) {   $btn_t4_Additional.Visible = $True                   } Else {   $btn_t4_Additional.Visible = $False }    # Show/Hide 'Additional Options' button
         $btn_t1_RestoreINI.Visible = $pic_t1_RestoreHelp.Visible
     }
     # ###########################################
@@ -1318,8 +1319,8 @@ Function Display-MainForm
     {
         If (($script:SelectedToolLang -ne '') -and ($($script:SelectedToolLang) -ne $($cmo_t1_ToolLang.SelectedItem.Text)))
         {
-            $ChangeLang = [System.Windows.Forms.MessageBox]::Show($MainFORM, ($($script:ToolLangINI['page1']['ChangeLanguage']) -f $script:toolName, $script:SelectedToolLang, $cmo_t1_ToolLang.SelectedItem.Text), $($script:ToolLangINI['page1']['ToolLanguage']), 'YesNo', 'Question')
-            If ($ChangeLang -eq 'No') { Return }
+            [System.Windows.Forms.DialogResult]$ChangeLang = [System.Windows.Forms.MessageBox]::Show($MainFORM, ($($script:ToolLangINI['page1']['ChangeLanguage']) -f $script:toolName, $script:SelectedToolLang, $cmo_t1_ToolLang.SelectedItem.Text), $($script:ToolLangINI['page1']['ToolLanguage']), 'YesNo', 'Question')
+            If ($ChangeLang -eq [System.Windows.Forms.DialogResult]::No) { Return }
         }
 
         # Load the new language
@@ -1623,7 +1624,7 @@ Function Display-MainForm
     }
 
     $pic_t1_RestoreHelp_Click = {
-        [string]$msgbox = [System.Windows.Forms.MessageBox]::Show($MainFORM, $($script:ToolLangINI['restore']['Message']), $($script:ToolLangINI['Restore']['Button']), 'OK', 'Information')
+        [System.Windows.Forms.MessageBox]::Show($MainFORM, $($script:ToolLangINI['restore']['Message']), $($script:ToolLangINI['Restore']['Button']), 'OK', 'Information')
     }
 
     $btn_t1_RestoreINI_Click = {
@@ -1870,14 +1871,15 @@ Function Display-MainForm
 
         If ($script:ShowChangesMade -eq $True)
         {
-            $msgbox = ([System.Windows.Forms.MessageBox]::Show($MainFORM, $($script:ToolLangINI['page2']['ChangesMade']), $script:toolName, 'YesNo', 'Warning', 'Button2'))
-            If ($msgbox -eq 'No') { Return }
+            [System.Windows.Forms.DialogResult]$msgbox = ([System.Windows.Forms.MessageBox]::Show($MainFORM, $($script:ToolLangINI['page2']['ChangesMade']), $script:toolName, 'YesNo', 'Warning', 'Button2'))
+            If ($msgbox -eq [System.Windows.Forms.DialogResult]::No) { Return }
         }
 
         # Reset the last page
         $btn_t4_Save.Enabled         = $False
         $btn_t4_Generate.Enabled     = $False
         $chk_t4_GenerateMini.Enabled = $False
+        $script:DisabledHidden       = $False
 
         $MainFORM.Cursor             = 'WaitCursor'
         $btn_t3_Complete.Enabled     = $False
@@ -1890,7 +1892,7 @@ Function Display-MainForm
         {
             # Get correct ListView object
             [System.Windows.Forms.TabPage] $tabObject = $tab_t3_Pages.TabPages["tab_$($folder.Header.Trim())"]
-            [System.Windows.Forms.ListView]$lvwObject =        $tabObject.Controls["lvw_$($folder.Header.Trim())"]
+            [System.Windows.Forms.ListView]$lvwObject =    $tabObject.Controls["lvw_$($folder.Header.Trim())"]
 
             # Clear any existing entries
             $lvwObject.Items.Clear()
@@ -2011,17 +2013,23 @@ Function Display-MainForm
                 }
 
                 # Add 'spacing' gap between groups
-                If ($lvwObject.Groups[$guid].Items.Count -gt 0) { Add-ListViewItem -ListView $lvwObject -Name ' ' -SubItems ('','','','') -Group $guid -ImageIndex -1 -Enabled $false }
+                If ($lvwObject.Groups[$guid].Items.Count -gt 0)
+                {
+                    [string]$IsDisabled = $False
+                    If ($lvwObject.Groups[$guid].Items[0].ImageIndex -eq 2) { $IsDisabled = $True }
+                    Add-ListViewItem -ListView $lvwObject -Name ' ' -SubItems ('', '', '', $IsDisabled) -Group $guid -ImageIndex -1 -Enabled $false
+                }
             }
         }
 
         $tim_CompleteButton.Start()
-        $tab_Pages.SelectedIndex   = 2
-        $btn_t4_Save.Enabled       = $True
-        $lbl_t3_NoChecks.Visible   = $False
-        $script:ShowChangesMade    = $True
+        $tab_Pages.SelectedIndex     =       2
+        $btn_t4_Save.Enabled         =       $True
+        $lbl_t3_NoChecks.Visible     =       $False
+        $btn_t3_HideDisabled.Enabled = (-not $script:DisabledHidden)
+        $script:ShowChangesMade      =       $True
         Update-NavButtons
-        $MainFORM.Cursor           = 'Default'
+        $MainFORM.Cursor             = 'Default'
     }
 
     # ###########################################
@@ -2108,6 +2116,18 @@ Function Display-MainForm
     $tim_CompleteButton_Tick = {
         $script:CompleteTick++
         If ($script:CompleteTick -ge 1) { $btn_t3_Complete.Enabled = $True; $tim_CompleteButton.Stop }
+    }
+
+    # Hide all disabled checks from list
+    $btn_t3_HideDisabled_Click = {
+        $script:DisabledHidden = $True
+        $btn_t3_HideDisabled.Enabled = $False
+        ForEach ($folder In $lst_t2_SelectChecks.Groups)
+        {
+            [System.Windows.Forms.TabPage] $tabObject = $tab_t3_Pages.TabPages["tab_$($folder.Header.Trim())"]
+            [System.Windows.Forms.ListView]$lvwObject =    $tabObject.Controls["lvw_$($folder.Header.Trim())"]
+            ForEach ($item In $lvwObject.Items) { If (($item.ImageIndex -eq 2) -or ($item.SubItems[4].Text -eq $True)) { $item.Remove() } }
+        }
     }
 
     # ###########################################
@@ -2304,6 +2324,7 @@ Function ChangeLanguage
     $btn_t3_PrevTab.Text                  = ($script:ToolLangINI['page3']['Prev'])
     $btn_t3_NextTab.Text                  = ($script:ToolLangINI['page3']['Next'])
     $btn_t3_Complete.Text                 = ($script:ToolLangINI['page3']['Complete'])
+    $btn_t3_HideDisabled.Text             = ($script:ToolLangINI['hidedisabled']['Button'])
 
     ForEach ($tab In $tab_t3_Pages.TabPages) {
         [System.Windows.Forms.ListView]$lvTmp = $tab.Controls["lvw_$($tab.Text)"]
@@ -2689,17 +2710,17 @@ Function ChangeLanguage
     $tab_Page1.Controls.Add($lbl_t1_ScanningScripts)
 
     $btn_t1_RestoreINI                  = (New-Object -TypeName 'System.Windows.Forms.Button')
-    $btn_t1_RestoreINI.Location         = '322, 635'
-    $btn_t1_RestoreINI.Size             = '150,  25'
+    $btn_t1_RestoreINI.Location         = '316, 635'
+    $btn_t1_RestoreINI.Size             = '162,  25'
     $btn_t1_RestoreINI.Text             = ($script:ToolLangINI['restore']['Button'])
     $btn_t1_RestoreINI.Add_Click($btn_t1_RestoreINI_Click)
     $MainFORM.Controls.Add($btn_t1_RestoreINI)    # On main form (not tab 1)
 
     $pic_t1_RestoreHelp                 = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
-    $pic_t1_RestoreHelp.Location        = '478, 640'
+    $pic_t1_RestoreHelp.Location        = '484, 640'
     $pic_t1_RestoreHelp.Size            = ' 16,  16'
     $pic_t1_RestoreHelp.Cursor          = 'Hand'
-    $pic_t1_RestoreHelp.BackColor       = 'Window'
+    $pic_t1_RestoreHelp.BackColor       = 'Control'
     $pic_t1_RestoreHelp.Add_Click($pic_t1_RestoreHelp_Click)
     $MainFORM.Controls.Add($pic_t1_RestoreHelp)
 
@@ -2958,6 +2979,15 @@ Function ChangeLanguage
     $btn_t3_Complete.Enabled            = $False
     $btn_t3_Complete.Add_Click($btn_t3_Complete_Click)
     $tab_Page3.Controls.Add($btn_t3_Complete)
+
+    $btn_t3_HideDisabled                = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t3_HideDisabled.Location       = '316, 635'
+    $btn_t3_HideDisabled.Size           = '162,  25'
+    $btn_t3_HideDisabled.Text           = ($script:ToolLangINI['hidedisabled']['Button'])
+    $btn_t3_HideDisabled.Enabled        = $False
+    $btn_t3_HideDisabled.Visible        = $False
+    $btn_t3_HideDisabled.Add_Click($btn_t3_HideDisabled_Click)
+    $MainFORM.Controls.Add($btn_t3_HideDisabled)    # On main form (not tab 3)
 #endregion
 #region TAB 4 - Generate Settings And QA Script
     $lbl_t4_Complete                    = (New-Object -TypeName 'System.Windows.Forms.Label')
@@ -3040,8 +3070,8 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($txt_t4_RT_Outer)    # Border wrapper for ReportTitle box to make it look bigger
 
     $btn_t4_Additional                  = (New-Object -TypeName 'System.Windows.Forms.Button')
-    $btn_t4_Additional.Location         = '322, 635'
-    $btn_t4_Additional.Size             = '150,  25'
+    $btn_t4_Additional.Location         = '316, 635'
+    $btn_t4_Additional.Size             = '162,  25'
     $btn_t4_Additional.Text             = ($script:ToolLangINI['additional']['Button'])
     $btn_t4_Additional.Enabled          = $False
     $btn_t4_Additional.Visible          = $False
