@@ -48,7 +48,7 @@ Function sec-08-domain-credential-caching
             $result.result  = $script:lang['Fail']
             $result.message = $script:lang['f001']
         }
-        ElseIf ($gITMp -eq '1')
+        ElseIf ($gITMp -eq '0')
         {
             $result.result  = $script:lang['Pass']
             $result.message = $script:lang['p001']
