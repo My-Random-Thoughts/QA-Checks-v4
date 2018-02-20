@@ -1,4 +1,4 @@
-﻿# INTERNAL CHECK TO GET SERVER DETAILS (HARDWARE, OS, CPU, RAM) FOR TOP OF HTML REPORT
+# INTERNAL CHECK TO GET SERVER DETAILS (HARDWARE, OS, CPU, RAM) FOR TOP OF HTML REPORT
 $int00 = {
     Function newResult { Return ( New-Object -TypeName PSObject -Property @{server =''; name=''; check=''; datetime=(Get-Date -Format 'yyyy-MM-dd HH:mm'); result='Unknown'; message=''; data=''; blob=''} ) }
     $script:lang = @{}
@@ -646,8 +646,12 @@ SECTION_LINKS
 
 "@
 
+    # Replace COM with TOL for Compliance to Tooling conversion
+    $ResultsInput | ForEach-Object -Process { If ($_.check.StartsWith('com-') -eq $true) { $_.check = $_.check.Replace('com-', 'tol-') } }
+
     # Sort the results                               # Skip Internal Check
     $ResultsInput   = @($ResultsInput | Select-Object -Skip 1 | Sort-Object check)
+
     $reportTemplate = @"
     <div class="checkItem"><div class="boxContainer"><div class="check RESULT_COLOUR HELP_SECTION"><span class="code">SECTION_CODE</span><span class="num">CHECK_NUMBER</span>
     </div></div><div class="contentContainer"><span class="checkContainer"><div class="name row">CHECK_TITLE</div><div class="message row">CHECK_MESSAGE</div></span>
@@ -727,6 +731,9 @@ Function Add-HoverHelp
 {
     Param ([string]$Check)
     [System.Text.StringBuilder]$help = ''
+
+    If ($Check.StartsWith('tol') -eq $true) { $Check = $Check.Replace('tol', 'com') }    # COM/TOL swap
+
     If ($script:qahelp[$Check])
     {
         Try
