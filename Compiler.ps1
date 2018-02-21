@@ -90,21 +90,21 @@ Function Load-IniFile ([string]$InputFile)
     [string]   $item    = "^\s*(?!$($comment))\s*([^=]*)\s*=\s*(.*)\s*$"
     [hashtable]$ini     = @{}
 
-    If ((Test-Path -Path $inputfile) -eq $False) { Write-Host "Load-IniFile: Path not found: $inputfile";Return $null }
+    If ((Test-Path -LiteralPath $inputfile) -eq $False) { Write-Host "Load-IniFile: Path not found: $inputfile"; Return $null }
 
     [string]$name    = $null
     [string]$section = $null
     Switch -Regex -File $inputfile {
         "$($header)" {
-            $section = ($matches[1] -replace ' ','_')
-            $ini[$section.Trim()] = @{}
+            [string]$section = (($matches[1] -replace ' ','_').Trim().Trim("'"))
+            If ([string]::IsNullOrEmpty($ini[$section]) -eq $true) { $ini[$section.Trim()] = @{} }
         }
         "$($item)"   {
-            $name, $value = $matches[1..2]
+            [string]$name, $value = $matches[1..2]
             If (([string]::IsNullOrEmpty($name) -eq $False) -and ([string]::IsNullOrEmpty($section) -eq $False))
             {
-                $value = (($value -split '    #')[0])
-                $ini[$section][$name.Trim()] = $value.Trim()
+                $value = (($value -split '    #')[0]).Trim()    # Remove any comments
+                $ini[$section][$name.Trim()] = ($value.Replace('`n', "`n"))
             }
         }
     }
