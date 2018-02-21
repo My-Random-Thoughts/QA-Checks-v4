@@ -731,9 +731,7 @@ Function Add-HoverHelp
 {
     Param ([string]$Check)
     [System.Text.StringBuilder]$help = ''
-
-    If ($Check.StartsWith('tol') -eq $true) { $Check = $Check.Replace('tol', 'com') }    # COM/TOL swap
-
+    #If ($Check.StartsWith('tol') -eq $true) { $Check = $Check.Replace('tol', 'com') }    # COM/TOL swap
     If ($script:qahelp[$Check])
     {
         Try
