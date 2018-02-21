@@ -4,7 +4,7 @@ Function Check-NameSpace ([string]$NameSpace)
     ForEach ($Leaf In $NameSpace.Split('\'))
     {
         [string]$Path += "$($Leaf)\"
-        Try { [string]$gCIMi = (Get-CimInstance -ClassName '__NameSPace' -Namespace $Path.Trim('\') -ErrorAction SilentlyContinue) } Catch { }
+        Try { [string]$gCIMi = (Get-CimInstance -ClassName '__NameSpace' -Namespace $Path.Trim('\') -ErrorAction SilentlyContinue) } Catch { }
         If ($gCIMi -eq '') { Return $false } Else { $gCIMi = '' }
     }
     Return $true
