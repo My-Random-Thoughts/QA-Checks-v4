@@ -17,6 +17,7 @@ The following changes have been made from v3 of the QA checks.  These might affe
 
 - The following checks have been renamed:
     - _c-net-02-unused-network-interfaces_    -->    _net-02-dhcp-enabled-network-interfaces_
+    - COMPLIANCE has been renamed to TOOLING, with all checks renamed from _com-_ to _tol-_
 
 - The following checks are new:
     - _hvh-02-thick-disks_ : Check all virtual machines are using thick provisioned disks.
