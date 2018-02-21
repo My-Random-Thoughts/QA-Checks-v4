@@ -1,4 +1,4 @@
-<#
+﻿<#
     DESCRIPTION: 
         Check NetBackup agent is installed and that the correct port is open to the management server.
         Only applies to physical servers, or virtual servers with a list of known software installed.
@@ -38,12 +38,12 @@
         Check-Software
 #>
 
-Function com-04-netbackup-agent-installed
+Function tol-04-netbackup-agent-installed
 {
     $result        = newResult
     $result.server = $env:ComputerName
     $result.name   = $script:lang['Name']
-    $result.check  = 'com-04-netbackup-agent-installed'
+    $result.check  = 'tol-04-netbackup-agent-installed'
     
     #... CHECK STARTS HERE ...#
 

@@ -35,12 +35,12 @@
         Check-Software
 #>
 
-Function com-09-trend-antivirus-installed
+Function tol-09-trend-antivirus-installed
 {
     $result        = newResult
     $result.server = $env:ComputerName
     $result.name   = $script:lang['Name']
-    $result.check  = 'com-09-trend-antivirus-installed'
+    $result.check  = 'tol-09-trend-antivirus-installed'
 
     #... CHECK STARTS HERE ...#
 

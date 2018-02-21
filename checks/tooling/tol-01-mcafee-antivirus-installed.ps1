@@ -1,4 +1,4 @@
-<#
+﻿<#
     DESCRIPTION: 
         Check that McAfee anti-virus is installed and virus definitions are up to date.
 
@@ -37,12 +37,12 @@
         Check-IsPortOpen
 #>
 
-Function com-01-mcafee-antivirus-installed
+Function tol-01-mcafee-antivirus-installed
 {
     $result        = newResult
     $result.server = $env:ComputerName
     $result.name   = $script:lang['Name']
-    $result.check  = 'com-01-mcafee-antivirus-installed'
+    $result.check  = 'tol-01-mcafee-antivirus-installed'
 
     #... CHECK STARTS HERE ...#
 

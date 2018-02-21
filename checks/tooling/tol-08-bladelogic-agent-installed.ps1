@@ -1,4 +1,4 @@
-<#
+﻿<#
     DESCRIPTION: 
         Check BladeLogic monitoring agent is installed, and that the correct port is listening.
         Also check that the USERS.LOCAL file is configured correctly.
@@ -37,12 +37,12 @@
         Check-Software
 #>
 
-Function com-08-bladelogic-agent-installed
+Function tol-08-bladelogic-agent-installed
 {
     $result        = newResult
     $result.server = $env:ComputerName
     $result.name   = $script:lang['Name']
-    $result.check  = 'com-08-bladelogic-agent-installed'
+    $result.check  = 'tol-08-bladelogic-agent-installed'
 
     #... CHECK STARTS HERE ...#
 

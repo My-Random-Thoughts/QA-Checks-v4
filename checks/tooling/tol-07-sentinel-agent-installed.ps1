@@ -1,4 +1,4 @@
-<#
+﻿<#
     DESCRIPTION: 
         Check sentinel monitoring agent is installed, and that the correct port is open to the management server.
 
@@ -29,12 +29,12 @@
         Check-IsPortOpen
 #>
 
-Function com-07-sentinel-agent-installed
+Function tol-07-sentinel-agent-installed
 {
     $result        = newResult
     $result.server = $env:ComputerName
     $result.name   = $script:lang['Name']
-    $result.check  = 'com-07-sentinel-agent-installed'
+    $result.check  = 'tol-07-sentinel-agent-installed'
 
     #... CHECK STARTS HERE ...#
 

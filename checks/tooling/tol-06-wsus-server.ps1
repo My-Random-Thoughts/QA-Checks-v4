@@ -28,12 +28,12 @@
         Check-IsPortOpen
 #>
 
-Function com-06-wsus-server
+Function tol-06-wsus-server
 {
     $result        = newResult
     $result.server = $env:ComputerName
     $result.name   = $script:lang['Name']
-    $result.check  = 'com-06-wsus-server'
+    $result.check  = 'tol-06-wsus-server'
 
     #... CHECK STARTS HERE ...#
 

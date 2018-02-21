@@ -30,12 +30,12 @@
         Check-Software
 #>
 
-Function com-10-software-installed
+Function tol-10-software-installed
 {
     $result        = newResult
     $result.server = $env:ComputerName
     $result.name   = $script:lang['Name']
-    $result.check  = 'com-10-software-installed'
+    $result.check  = 'tol-10-software-installed'
 
     #... CHECK STARTS HERE ...#
 

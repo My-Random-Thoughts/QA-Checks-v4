@@ -1,4 +1,4 @@
-<#
+﻿<#
     DESCRIPTION: 
         Check relevant SCCM agent process is running, and that the correct port is open to the management server.
 
@@ -29,12 +29,12 @@
         Check-IsPortOpen
 #>
 
-Function com-03-sccm-installed
+Function tol-03-sccm-installed
 {
     $result        = newResult
     $result.server = $env:ComputerName
     $result.name   = $script:lang['Name']
-    $result.check  = 'com-03-sccm-installed'
+    $result.check  = 'tol-03-sccm-installed'
 
     #... CHECK STARTS HERE ...#
 

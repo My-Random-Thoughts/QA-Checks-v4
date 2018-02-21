@@ -13,7 +13,7 @@
 
     RESULTS:
         PASS:
-            {product} found, Port {port} open to {server}
+            {product} found, port {port} open to {server}
         WARNING:
         FAIL:
             Monitoring software not found, install required
@@ -30,12 +30,12 @@
         Check-Software
 #>
 
-Function com-02-scom-monitoring-installed
+Function tol-02-scom-monitoring-installed
 {
     $result        = newResult
     $result.server = $env:ComputerName
     $result.name   = $script:lang['Name']
-    $result.check  = 'com-02-scom-monitoring-installed'
+    $result.check  = 'tol-02-scom-monitoring-installed'
 
     #... CHECK STARTS HERE ...#
 

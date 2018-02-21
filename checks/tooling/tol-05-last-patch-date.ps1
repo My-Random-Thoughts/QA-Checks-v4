@@ -30,12 +30,12 @@
         None
 #>
 
-Function com-05-last-patch-date
+Function tol-05-last-patch-date
 {
     $result        = newResult
     $result.server = $env:ComputerName
     $result.name   = $script:lang['Name']
-    $result.check  = 'com-05-last-patch-date'
+    $result.check  = 'tol-05-last-patch-date'
 
     #... CHECK STARTS HERE ...#
 

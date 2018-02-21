@@ -28,12 +28,12 @@
         Check-IsDomainController
 #>
 
-Function com-12-only-one-server-role
+Function tol-12-only-one-server-role
 {
     $result        = newResult
     $result.server = $env:ComputerName
     $result.name   = $script:lang['Name']
-    $result.check  = 'com-12-only-one-server-role'
+    $result.check  = 'tol-12-only-one-server-role'
  
     #... CHECK STARTS HERE ...#
 

@@ -30,12 +30,12 @@
         None
 #>
 
-Function com-11-services-installed
+Function tol-11-services-installed
 {
     $result        = newResult
     $result.server = $env:ComputerName
     $result.name   = $script:lang['Name']
-    $result.check  = 'com-11-services-installed'
+    $result.check  = 'tol-11-services-installed'
 
     #... CHECK STARTS HERE ...#
 
