@@ -1,5 +1,8 @@
+### 2018-02-21
+- It was easier than I thought to convert from COM- to TOL-.  Your settings files will be automatically converted if you use the QASCT.  If you use the compiler manually, it will read in both the new and old versions.
+
 ### 2018-02-20
-- Renamed Compliance section to Tooling.  This is only a label change, all your settings and configuration will remain intact.  I'll rename the checks from COM- to TOL- at a later date.  I'll create a tool to help you with this.
+- Renamed Compliance section to Tooling.  This is only a label change, all your settings and configuration will remain intact.  I'll rename the checks from COM- to TOL- at a later date.
 
 ### 2018-01-25
 - Minor changes to the QASCT to enable links in check descriptions
