@@ -22,7 +22,7 @@ Param ([string]$Language)
 Remove-Variable -Name    * -Exclude 'Language' -ErrorAction SilentlyContinue
 #Requires       -Version 4
 Set-StrictMode  -Version 2
-#Clear-Host
+Clear-Host
 
 # IMG_MAINFORM Icon List
 #    0: Gear      : (green)      - default-settings
@@ -52,11 +52,11 @@ Set-StrictMode  -Version 2
 
 [hashtable]$script:languageINI      = @{}
 [hashtable]$script:ToolLangINI      = @{}
-[boolean]  $script:DisabledHidden   = $False
 [object]   $script:SelectedLanguage = $null
 [string]   $script:SelectedToolLang = ''
-[string]   $script:regExMatch       = "((?:.|\s)+?)(?:(?:[A-Z\- ]+:\n)|(?:#>))"    # Used for all RegEx search matching
+[string]   $script:regExMatch       = '((?:.|\s)+?)(?:(?:[A-Z\- ]+:\n)|(?:#>))'    # Used for all RegEx search matching used in the check comments
 [string]   $script:toolName         = 'QA Settings Configuration Tool'             # QASCT Name
+[string]   $script:toolVersion      = 'v4.18.2102'                                 # QASCT Version (v4.yy.mmdd)
 
 ###################################################################################################
 ##                                                                                               ##
@@ -297,6 +297,7 @@ Function Load-IniFile ([string]$Inputfile, [hashtable]$ExistingHashTable = $null
     Switch -Regex -File $inputfile {
         "$($header)" {
             [string]$section = (($matches[1] -replace ' ','_').Trim().Trim("'"))
+            If ($section.StartsWith('com') -eq $true) { $section = "tol$($section.Substring(3))" }
             If ([string]::IsNullOrEmpty($ini[$section]) -eq $true) { $ini[$section] = @{} }
         }
         "$($item)"   {
@@ -1167,7 +1168,7 @@ Function Show-AboutSplash ()
 
     $lbl_Header                    = (New-Object -TypeName 'System.Windows.Forms.Label')
     $lbl_Header.Location           = ' 82,  12'
-    $lbl_Header.Size               = '325,  32'
+    $lbl_Header.Size               = '250,  32'
     $lbl_Header.Text               = 'Server QA Checks v4'
     $frm_About.Controls.Add($lbl_Header)
 
@@ -1176,6 +1177,13 @@ Function Show-AboutSplash ()
     $lbl_SubHeader.Size            = '322,  32'
     $lbl_SubHeader.Text            = "Mike Blackett`nsupport@myrandomthoughts.co.uk"
     $frm_About.Controls.Add($lbl_SubHeader)
+
+    $lbl_Version                   = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_Version.Location          = '332,  12'
+    $lbl_Version.Size              = ' 75,  32'
+    $lbl_Version.Text              = $script:toolVersion
+    $lbl_Version.TextAlign         = 'TopRight'
+    $frm_About.Controls.Add($lbl_Version)
 
     $pic_GitHub                    = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
     $pic_GitHub.Location           = ' 12, 106'
@@ -1216,11 +1224,9 @@ Function Show-AboutSplash ()
 #region FORM STARTUP
     [System.Drawing.Font]$sysFontH = (New-Object -TypeName 'System.Drawing.Font' ($sysFont.Name, ($sysFont.SizeInPoints + 7), [System.Drawing.FontStyle]::Bold))
     ForEach ($control In $frm_About.Controls) { $control.Font = $sysFont }
-
     $lbl_Header.Font  = $sysFontH
     $pic_GitHub.Image = $img_MainForm.Images[8]
     $pic_Flags.Image  = $img_MainForm.Images[4]
-
     [void]$frm_About.ShowDialog()
 #endregion
 }
@@ -1300,6 +1306,7 @@ Function Display-MainForm
 
         $MainFORM.Remove_Load($MainFORM_Load)
         $MainFORM.Remove_Load($MainFORM_StateCorrection_Load)
+        $MainFORM.Remove_Resize($MainFORM_Resize)
         $MainFORM.Remove_FormClosing($MainFORM_FormClosing)
     }
 #endregion
@@ -1308,10 +1315,54 @@ Function Display-MainForm
     $tab_Pages_SelectedIndexChanged = {
         If ($tab_Pages.SelectedIndex -eq 0) {  $pic_t1_RestoreHelp.Visible = $True                   } Else {  $pic_t1_RestoreHelp.Visible = $False }    # Show/Hide 'INI Tools' button
         If ($tab_Pages.SelectedIndex -eq 1) {  $lbl_t2_ChangesMade.Visible = $script:ShowChangesMade } Else {  $lbl_t2_ChangesMade.Visible = $False }    # Show/Hide 'Selection Changes' label
-        If ($tab_Pages.SelectedIndex -eq 2) { $btn_t3_HideDisabled.Visible = $True                   } Else { $btn_t3_HideDisabled.Visible = $False }    # Show/Hide 'Hide Disabled Checks' button
+        If ($tab_Pages.SelectedIndex -eq 2) {                                                        } Else {                                       }
         If ($tab_Pages.SelectedIndex -eq 3) {   $btn_t4_Additional.Visible = $True                   } Else {   $btn_t4_Additional.Visible = $False }    # Show/Hide 'Additional Options' button
         $btn_t1_RestoreINI.Visible = $pic_t1_RestoreHelp.Visible
     }
+
+    $MainFORM_Resize = {
+        # Tab 1
+        $btn_t1_Search.Left       = ($tab_Page1.Width        - $btn_t1_Search.Width)       / 2
+        $btn_t1_Import.Left       = ($tab_Page1.Width        - $btn_t1_Import.Width)       / 2
+        $cmo_t1_Language.Left     = ($tab_Page1.Width        - $cmo_t1_Language.Width)     / 2
+        $cmo_t1_SettingsFile.Left = ($tab_Page1.Width        - $cmo_t1_SettingsFile.Width) / 2
+        $lbl_t1_Language.Left     = ($btn_t1_Search.Left     - $lbl_t1_Language.Width)     - 6
+        $lbl_t1_SettingsFile.Left = ($btn_t1_Search.Left     - $lbl_t1_SettingsFile.Width) - 6
+        $lbl_t1_MissingFile.Left  = ($btn_t1_Search.Left     + $btn_t1_Search.Width)       + 6
+        $lnk_t1_Language.Left     = ($btn_t1_Search.Left     + $btn_t1_Search.Width)       + 6
+        $btn_t1_RestoreINI.Left   = ($MainFORM.Width         - $btn_t1_RestoreINI.Width)   / 2
+        $pic_t1_RestoreHelp.Left  = ($btn_t1_RestoreINI.Left + $btn_t1_RestoreINI.Width)   + 6
+
+        # Tab 2
+        $lst_t2_SelectChecks.Columns[1].Width = ($lst_t2_SelectChecks.Width - $lst_t2_SelectChecks.Columns[0].Width - 4 - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth)
+
+        # Tab 3
+        Try {
+            [System.Windows.Forms.ListView]$lvwObject = $tab_t3_Pages.SelectedTab.Controls["lvw_$($tab_t3_Pages.SelectedTab.Text.Trim())"]
+            $lvwObject.Columns[1].Width = ($lvwObject.Width - $lvwObject.Columns[0].Width - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth)
+            $lvwObject = $null
+        } Catch {}
+
+        [int]$gap = $btn_t3_NextTab.Left - ($btn_t3_PrevTab.Left + $btn_t3_PrevTab.Width)
+        $btn_t3_PrevTab.Left      = (($tab_Page3.Width       - ($btn_t3_PrevTab.Width + $btn_t3_NextTab.Width + $gap)) / 2) + 4
+        $btn_t3_NextTab.Left      = ($btn_t3_PrevTab.Left    + $btn_t3_PrevTab.Width + $gap)
+        $lbl_t3_SectionTabs.Left  = ($btn_t3_PrevTab.Left    - $lbl_t3_SectionTabs.Width)  - 6
+
+        # Tab 4
+        $btn_t4_Save.Left         = ($tab_Page4.Width        - $btn_t4_Save.Width)         / 2
+        $btn_t4_Generate.Left     = ($tab_Page4.Width        - $btn_t4_Generate.Width)     / 2
+        $txt_t4_ShortCode.Left    = ($tab_Page4.Width        - $txt_t4_ShortCode.Width)    / 2
+        $txt_t4_SC_Outer.Left     = ($tab_Page4.Width        - $txt_t4_SC_Outer.Width)     / 2
+        $txt_t4_ReportTitle.Left  = ($tab_Page4.Width        - $txt_t4_ReportTitle.Width)  / 2
+        $txt_t4_RT_Outer.Left     = ($tab_Page4.Width        - $txt_t4_RT_Outer.Width)     / 2
+        $lbl_t4_ShortName.Left    = ($btn_t4_Save.Left       - $lbl_t4_ShortName.Width)    - 6
+        $lbl_t4_ReportTitle.Left  = ($btn_t4_Save.Left       - $lbl_t4_ReportTitle.Width)  - 6
+        $lbl_t4_CodeEg.Left       = ($btn_t4_Save.Left       + $btn_t4_Save.Width)         + 6
+        $lbl_t4_QAReport.Left     = ($btn_t4_Save.Left       + $btn_t4_Save.Width)         + 6
+        $chk_t4_GenerateMini.Left = ($btn_t4_Save.Left       + $btn_t4_Save.Width)         + 6
+        $btn_t4_Additional.Left   = ($MainFORM.Width         - $btn_t4_Additional.Width)   / 2
+    }
+
     # ###########################################
 #endregion
 #region SCRIPTS-TAB-1
@@ -1669,7 +1720,7 @@ Function Display-MainForm
         [string]   $FuncOLD  = ''
         [string]   $FuncNEW  = ''
         [hashtable]$Sections = @{'acc'='Accounts';
-                                 'com'='Compliance';
+                                 'com'='Tooling';
                                  'ctx'='Citrix';
                                  'drv'='Drives';
                                  'exh'='Exchange';
@@ -1679,6 +1730,7 @@ Function Display-MainForm
                                  'sec'='Security';
                                  'sql'='SQL';
                                  'sys'='System';
+                                 'tol'='Tooling';
                                  'vmw'='Virtual'}
 
         # Start process
@@ -1879,7 +1931,6 @@ Function Display-MainForm
         $btn_t4_Save.Enabled         = $False
         $btn_t4_Generate.Enabled     = $False
         $chk_t4_GenerateMini.Enabled = $False
-        $script:DisabledHidden       = $False
 
         $MainFORM.Cursor             = 'WaitCursor'
         $btn_t3_Complete.Enabled     = $False
@@ -2013,12 +2064,7 @@ Function Display-MainForm
                 }
 
                 # Add 'spacing' gap between groups
-                If ($lvwObject.Groups[$guid].Items.Count -gt 0)
-                {
-                    [string]$IsDisabled = $False
-                    If ($lvwObject.Groups[$guid].Items[0].ImageIndex -eq 2) { $IsDisabled = $True }
-                    Add-ListViewItem -ListView $lvwObject -Name ' ' -SubItems ('', '', '', $IsDisabled) -Group $guid -ImageIndex -1 -Enabled $false
-                }
+                If ($lvwObject.Groups[$guid].Items.Count -gt 0) { Add-ListViewItem -ListView $lvwObject -Name ' ' -SubItems ('', '', '', '') -Group $guid -ImageIndex -1 -Enabled $false }
             }
         }
 
@@ -2026,7 +2072,6 @@ Function Display-MainForm
         $tab_Pages.SelectedIndex     =       2
         $btn_t4_Save.Enabled         =       $True
         $lbl_t3_NoChecks.Visible     =       $False
-        $btn_t3_HideDisabled.Enabled = (-not $script:DisabledHidden)
         $script:ShowChangesMade      =       $True
         Update-NavButtons
         $MainFORM.Cursor             = 'Default'
@@ -2100,9 +2145,9 @@ Function Display-MainForm
         $btn_t3_PrevTab.Enabled = $tab_t3_Pages.SelectedIndex -gt 0
     }
 
-    $tab_t3_Pages_SelectedIndexChanged = {                    Update-NavButtons }
-    $btn_t3_PrevTab_Click  = { $tab_t3_Pages.SelectedIndex--; Update-NavButtons }
-    $btn_t3_NextTab_Click  = { $tab_t3_Pages.SelectedIndex++; Update-NavButtons }
+    $tab_t3_Pages_SelectedIndexChanged = { $MainFORM_Resize.Invoke()    ; Update-NavButtons }
+    $btn_t3_PrevTab_Click              = { $tab_t3_Pages.SelectedIndex--; Update-NavButtons }
+    $btn_t3_NextTab_Click              = { $tab_t3_Pages.SelectedIndex++; Update-NavButtons }
 
     $btn_t3_Complete_Click = {
         $script:ListViewCollection | ForEach-Object -Process {
@@ -2116,18 +2161,6 @@ Function Display-MainForm
     $tim_CompleteButton_Tick = {
         $script:CompleteTick++
         If ($script:CompleteTick -ge 1) { $btn_t3_Complete.Enabled = $True; $tim_CompleteButton.Stop }
-    }
-
-    # Hide all disabled checks from list
-    $btn_t3_HideDisabled_Click = {
-        $script:DisabledHidden = $True
-        $btn_t3_HideDisabled.Enabled = $False
-        ForEach ($folder In $lst_t2_SelectChecks.Groups)
-        {
-            [System.Windows.Forms.TabPage] $tabObject = $tab_t3_Pages.TabPages["tab_$($folder.Header.Trim())"]
-            [System.Windows.Forms.ListView]$lvwObject =    $tabObject.Controls["lvw_$($folder.Header.Trim())"]
-            ForEach ($item In $lvwObject.Items) { If (($item.ImageIndex -eq 2) -or ($item.SubItems[4].Text -eq $True)) { $item.Remove() } }
-        }
     }
 
     # ###########################################
@@ -2324,7 +2357,6 @@ Function ChangeLanguage
     $btn_t3_PrevTab.Text                  = ($script:ToolLangINI['page3']['Prev'])
     $btn_t3_NextTab.Text                  = ($script:ToolLangINI['page3']['Next'])
     $btn_t3_Complete.Text                 = ($script:ToolLangINI['page3']['Complete'])
-    $btn_t3_HideDisabled.Text             = ($script:ToolLangINI['hidedisabled']['Button'])
 
     ForEach ($tab In $tab_t3_Pages.TabPages) {
         [System.Windows.Forms.ListView]$lvTmp = $tab.Controls["lvw_$($tab.Text)"]
@@ -2351,8 +2383,8 @@ Function ChangeLanguage
     $MainFORM.AutoScaleDimensions       = '6, 13'
     $MainFORM.AutoScaleMode             = 'None'
     $MainFORM.ClientSize                = '794, 672'    # 800 x 700
-    $MainFORM.FormBorderStyle           = 'FixedSingle'
-    $MainFORM.MaximizeBox               = $False
+    $MainFORM.MinimumSize               = $MainFORM.Size
+    $MainFORM.FormBorderStyle           = 'Sizable'
     $MainFORM.StartPosition             = 'CenterScreen'
     $MainFORM.Text                      = $script:toolName
     $MainFORM.Icon                      = [System.Convert]::FromBase64String('
@@ -2403,12 +2435,14 @@ Function ChangeLanguage
         v/8MDAz/AAAAUAAAAAAAAAAAAAAAAAAAALYAAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/GRkZ/wAAACAAAAAAAAAAAAAAAAAABwAAAAcAAAADAAAAAQAAAAEAAAAAAAAAAAAAAAQAAAAH
         AAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAA')
     $MainFORM.Add_Load($MainFORM_Load)
+    $MainFORM.Add_Resize($MainFORM_Resize)
     $MainFORM.Add_FormClosing($MainFORM_FormClosing)
     $MainFORM.Add_FormClosed($Form_Cleanup_FormClosed)
 
     $MainTT                             = (New-Object -TypeName 'System.Windows.Forms.ToolTip')
 
     $tab_Pages                          = (New-Object -TypeName 'System.Windows.Forms.TabControl')
+    $tab_Pages.Anchor                   = 'Top, Bottom, Left, Right'
     $tab_Pages.Location                 = ' 12,  12'
     $tab_Pages.Size                     = '770, 608'
     $tab_Pages.Padding                  = ' 12,   6'
@@ -2417,21 +2451,25 @@ Function ChangeLanguage
     $MainFORM.Controls.Add($tab_Pages)
 
     $tab_Page1                          = (New-Object -TypeName 'System.Windows.Forms.TabPage')
+    $tab_Page1.Anchor                   = 'Top, Bottom, Left, Right'
     $tab_Page1.BackColor                = 'Control'
     $tab_Page1.Text                     = ($script:ToolLangINI['page1']['Tab'])
     $tab_Pages.Controls.Add($tab_Page1)
 
     $tab_Page2                          = (New-Object -TypeName 'System.Windows.Forms.TabPage')
+    $tab_Page2.Anchor                   = 'Top, Bottom, Left, Right'
     $tab_Page2.BackColor                = 'Control'
     $tab_Page2.Text                     = ($script:ToolLangINI['page2']['Tab'])
     $tab_Pages.Controls.Add($tab_Page2)
 
     $tab_Page3                          = (New-Object -TypeName 'System.Windows.Forms.TabPage')
+    $tab_Page3.Anchor                   = 'Top, Bottom, Left, Right'
     $tab_Page3.BackColor                = 'Control'
     $tab_Page3.Text                     = ($script:ToolLangINI['page3']['Tab'])
     $tab_Pages.Controls.Add($tab_Page3)
 
     $tab_Page4                          = (New-Object -TypeName 'System.Windows.Forms.TabPage')
+    $tab_Page4.Anchor                   = 'Top, Bottom, Left, Right'
     $tab_Page4.BackColor                = 'Control'
     $tab_Page4.Text                     = ($script:ToolLangINI['page4']['Tab'])
     $tab_Pages.Controls.Add($tab_Page4)
@@ -2441,6 +2479,7 @@ Function ChangeLanguage
     $btn_Exit.Size                      = ' 75,  25'
     $btn_Exit.Text                      = ($script:ToolLangINI['exit']['Button'])
     $btn_Exit.DialogResult              = [System.Windows.Forms.DialogResult]::Cancel    # Use this instead of a 'Click' event
+    $btn_Exit.Anchor                    = 'Bottom, Right'
     $MainFORM.CancelButton              = $btn_Exit
     $MainFORM.Controls.Add($btn_Exit)
 
@@ -2448,6 +2487,7 @@ Function ChangeLanguage
     $btn_About.Location                 = ' 12, 635'
     $btn_About.Size                     = ' 75,  25'
     $btn_About.Text                     = ($script:ToolLangINI['about']['Button'])
+    $btn_About.Anchor                   = 'Bottom, Left'
     $btn_About.Add_Click({ Show-AboutSplash })
     $MainFORM.Controls.Add($btn_About)
 
@@ -2616,6 +2656,7 @@ Function ChangeLanguage
 #endregion
 #region TAB 1 - Introduction / Select Location / Import
     $lbl_t1_Welcome                     = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t1_Welcome.Anchor              = 'Top, Left, Right'
     $lbl_t1_Welcome.Location            = '  9,   9'
     $lbl_t1_Welcome.Size                = '488,  20'
     $lbl_t1_Welcome.Text                = ($script:ToolLangINI['page1']['Title'])
@@ -2623,6 +2664,7 @@ Function ChangeLanguage
     $tab_Page1.Controls.Add($lbl_t1_Welcome)
 
     $lbl_t1_Introduction                = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t1_Introduction.Anchor         = 'Top, Left, Right'
     $lbl_t1_Introduction.Location       = '  9,  42'
     $lbl_t1_Introduction.Size           = '744, 250'
     $lbl_t1_Introduction.TextAlign      = 'TopLeft'
@@ -2630,6 +2672,7 @@ Function ChangeLanguage
     $tab_Page1.Controls.Add($lbl_t1_Introduction)
 
     $btn_t1_Search                      = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t1_Search.Anchor               = 'Top, Left'
     $btn_t1_Search.Location             = '281, 313'
     $btn_t1_Search.Size                 = '200, 35'
     $btn_t1_Search.Text                 = ($script:ToolLangINI['page1']['SetLocation'])
@@ -2637,6 +2680,7 @@ Function ChangeLanguage
     $tab_Page1.Controls.Add($btn_t1_Search)
 
     $lbl_t1_SettingsFile                = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t1_SettingsFile.Anchor         = 'Top, Left'
     $lbl_t1_SettingsFile.Location       = '  9, 375'
     $lbl_t1_SettingsFile.Size           = '266, 27'
     $lbl_t1_SettingsFile.Text           = ($script:ToolLangINI['page1']['BaseSettings'])
@@ -2644,6 +2688,7 @@ Function ChangeLanguage
     $tab_Page1.Controls.Add($lbl_t1_SettingsFile)
 
     $cmo_t1_SettingsFile                = (New-Object -TypeName 'System.Windows.Forms.ComboBox')
+    $cmo_t1_SettingsFile.Anchor         = 'Top, Left'
     $cmo_t1_SettingsFile.Location       = '281, 375'
     $cmo_t1_SettingsFile.Size           = '200,  27'
     $cmo_t1_SettingsFile.ItemHeight     = ' 21'
@@ -2657,6 +2702,7 @@ Function ChangeLanguage
     $tab_Page1.Controls.Add($cmo_t1_SettingsFile)
 
     $lbl_t1_MissingFile                 = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t1_MissingFile.Anchor          = 'Top, Left'
     $lbl_t1_MissingFile.Location        = '487, 375'
     $lbl_t1_MissingFile.Size            = '266, 27'
     $lbl_t1_MissingFile.Text            = "'default-settings.ini' $($script:ToolLangINI['page1']['BaseMissing'])"
@@ -2665,6 +2711,7 @@ Function ChangeLanguage
     $tab_Page1.Controls.Add($lbl_t1_MissingFile)
 
     $lbl_t1_Language                    = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t1_Language.Anchor             = 'Top, Left'
     $lbl_t1_Language.Location           = '  9, 417'
     $lbl_t1_Language.Size               = '266,  27'
     $lbl_t1_Language.Text               = ($script:ToolLangINI['page1']['Language'])
@@ -2672,6 +2719,7 @@ Function ChangeLanguage
     $tab_Page1.Controls.Add($lbl_t1_Language)
 
     $cmo_t1_Language                    = (New-Object -TypeName 'System.Windows.Forms.ComboBox')
+    $cmo_t1_Language.Anchor             = 'Top, Left'
     $cmo_t1_Language.Location           = '281, 417'
     $cmo_t1_Language.Size               = '200, 27'
     $cmo_t1_Language.ItemHeight         = ' 21'
@@ -2685,6 +2733,7 @@ Function ChangeLanguage
     $tab_Page1.Controls.Add($cmo_t1_Language)
 
     $lnk_t1_Language                    = (New-Object -TypeName 'System.Windows.Forms.LinkLabel')
+    $lnk_t1_Language.Anchor             = 'Top, Left'
     $lnk_t1_Language.Location           = '487, 417'
     $lnk_t1_Language.Size               = '266,  27'
     $lnk_t1_Language.Text               = ($script:ToolLangINI['page1']['Translation'])
@@ -2694,6 +2743,7 @@ Function ChangeLanguage
     $tab_Page1.Controls.Add($lnk_t1_Language)
 
     $btn_t1_Import                      = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t1_Import.Anchor               = 'Top, Left'
     $btn_t1_Import.Location             = '281, 471'
     $btn_t1_Import.Size                 = '200,  35'
     $btn_t1_Import.Text                 = ($script:ToolLangINI['page1']['ImportSettings'])
@@ -2702,6 +2752,7 @@ Function ChangeLanguage
     $tab_Page1.Controls.Add($btn_t1_Import)
 
     $lbl_t1_ScanningScripts             = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t1_ScanningScripts.Anchor      = 'Top, Left'
     $lbl_t1_ScanningScripts.Location    = '  9, 547'
     $lbl_t1_ScanningScripts.Size        = '744,  20'
     $lbl_t1_ScanningScripts.Text        = ''
@@ -2710,6 +2761,7 @@ Function ChangeLanguage
     $tab_Page1.Controls.Add($lbl_t1_ScanningScripts)
 
     $btn_t1_RestoreINI                  = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t1_RestoreINI.Anchor           = 'Bottom, Left'
     $btn_t1_RestoreINI.Location         = '316, 635'
     $btn_t1_RestoreINI.Size             = '162,  25'
     $btn_t1_RestoreINI.Text             = ($script:ToolLangINI['restore']['Button'])
@@ -2717,6 +2769,7 @@ Function ChangeLanguage
     $MainFORM.Controls.Add($btn_t1_RestoreINI)    # On main form (not tab 1)
 
     $pic_t1_RestoreHelp                 = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
+    $pic_t1_RestoreHelp.Anchor          = 'Bottom, Left'
     $pic_t1_RestoreHelp.Location        = '484, 640'
     $pic_t1_RestoreHelp.Size            = ' 16,  16'
     $pic_t1_RestoreHelp.Cursor          = 'Hand'
@@ -2725,6 +2778,7 @@ Function ChangeLanguage
     $MainFORM.Controls.Add($pic_t1_RestoreHelp)
 
     $cmo_t1_ToolLang                    = (New-Object -TypeName 'System.Windows.Forms.ComboBox')
+    $cmo_t1_ToolLang.Anchor             = 'Top, Right'
     $cmo_t1_ToolLang.Location           = '711,   3'
     $cmo_t1_ToolLang.Size               = ' 48,  27'
     $cmo_t1_ToolLang.ItemHeight         = ' 21'
@@ -2733,13 +2787,14 @@ Function ChangeLanguage
     $cmo_t1_ToolLang.DropDownStyle      = 'DropDownList'
     $cmo_t1_ToolLang.DrawMode           = 'OwnerDrawFixed'
     $cmo_t1_ToolLang.DropDownHeight     = (($cmo_t1_ToolLang.ItemHeight * 10) + 2)
-    $cmo_t1_ToolLang.Add_DrawItem(            { ComboIcons_OnDrawItem -Control $this                                                                     })
-    $cmo_t1_ToolLang.Add_SelectedIndexChanged({ cmo_t1_ToolLang_SelectedIndexChanged;                                       [void]$btn_t1_Search.Focus() })
-    $cmo_t1_ToolLang.Add_DropDownClosed(      { $cmo_t1_ToolLang.Location = '711,   3'; $cmo_t1_ToolLang.Size = ' 48,  27'; [void]$btn_t1_Search.Focus() })
-    $cmo_t1_ToolLang.Add_DropDown(            { $cmo_t1_ToolLang.Location = '559,   3'; $cmo_t1_ToolLang.Size = '200,  27'                               })
+    $cmo_t1_ToolLang.Add_DrawItem(            { ComboIcons_OnDrawItem -Control $this                                                                                             })
+    $cmo_t1_ToolLang.Add_DropDown(            { $cmo_t1_ToolLang.Location = "$($cmo_t1_ToolLang.Left - 152), 3"; $cmo_t1_ToolLang.Size = '200, 27'                               })
+    $cmo_t1_ToolLang.Add_DropDownClosed(      { $cmo_t1_ToolLang.Location = "$($cmo_t1_ToolLang.Left + 152), 3"; $cmo_t1_ToolLang.Size = ' 48, 27'; [void]$btn_t1_Search.Focus() })
+    $cmo_t1_ToolLang.Add_SelectedIndexChanged({ cmo_t1_ToolLang_SelectedIndexChanged;                                                               [void]$btn_t1_Search.Focus() })
     $tab_Page1.Controls.Add($cmo_t1_ToolLang)
 
     $lbl_t1_ToolLang                    = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t1_ToolLang.Anchor             = 'Top, Right'
     $lbl_t1_ToolLang.Location           = '559,   3'
     $lbl_t1_ToolLang.Size               = '146,  27'
     $lbl_t1_ToolLang.Text               = ($script:ToolLangINI['page1']['ToolLanguage'])
@@ -2749,6 +2804,7 @@ Function ChangeLanguage
 #endregion
 #region TAB 2 - Select QA Checkes To Include
     $lbl_t2_CheckSelection              = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t2_CheckSelection.Anchor       = 'Top, Left, Right'
     $lbl_t2_CheckSelection.Location     = '  9,   9'
     $lbl_t2_CheckSelection.Size         = '744,  20'
     $lbl_t2_CheckSelection.Text         = ($script:ToolLangINI['page2']['Title'])
@@ -2759,6 +2815,7 @@ Function ChangeLanguage
     $lst_t2_SelectChecks_CH_Code        = (New-Object -TypeName 'System.Windows.Forms.ColumnHeader')
     $lst_t2_SelectChecks_CH_Name        = (New-Object -TypeName 'System.Windows.Forms.ColumnHeader')
     $lst_t2_SelectChecks_CH_Desc        = (New-Object -TypeName 'System.Windows.Forms.ColumnHeader')
+    $lst_t2_SelectChecks.Anchor         = 'Top, Bottom, Left, Right'
     $lst_t2_SelectChecks.CheckBoxes     = $True
     $lst_t2_SelectChecks.HeaderStyle    = 'Nonclickable'
     $lst_t2_SelectChecks.FullRowSelect  = $True
@@ -2785,6 +2842,7 @@ Function ChangeLanguage
     $tab_Page2.Controls.Add($lst_t2_SelectChecks)
 
     $lnk_t2_Description                 = (New-Object -TypeName 'System.Windows.Forms.LinkLabel')
+    $lnk_t2_Description.Anchor          = 'Top, Bottom, Right'
     $lnk_t2_Description.BackColor       = 'Window'
     $lnk_t2_Description.Location        = '475,  36'
     $lnk_t2_Description.Size            = '277, 418'
@@ -2796,6 +2854,7 @@ Function ChangeLanguage
     $tab_Page2.Controls.Add($lnk_t2_Description)
 
     $lbl_t2_Search                      = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t2_Search.Anchor               = 'Bottom, Right'
     $lbl_t2_Search.Location             = '478, 457'
     $lbl_t2_Search.Size                 = '247,  17'
     $lbl_t2_Search.Text                 = ($script:ToolLangINI['page2']['SearchName'])
@@ -2805,6 +2864,7 @@ Function ChangeLanguage
     $tab_Page2.Controls.Add($lbl_t2_Search)
 
     $pic_t2_SearchHelp                  = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
+    $pic_t2_SearchHelp.Anchor           = 'Bottom, Right'
     $pic_t2_SearchHelp.Location         = '730, 458'
     $pic_t2_SearchHelp.Size             = ' 16,  16'
     $pic_t2_SearchHelp.Cursor           = 'Hand'
@@ -2814,6 +2874,7 @@ Function ChangeLanguage
     $tab_Page2.Controls.Add($pic_t2_SearchHelp)
 
     $pic_t2_Search                      = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
+    $pic_t2_Search.Anchor               = 'Bottom, Right'
     $pic_t2_Search.Location             = '725, 482'
     $pic_t2_Search.Size                 = ' 16,  16'
     $pic_t2_Search.Cursor               = 'Hand'
@@ -2823,6 +2884,7 @@ Function ChangeLanguage
     $tab_Page2.Controls.Add($pic_t2_Search)
 
     $txt_t2_Search                      = (New-Object -TypeName 'System.Windows.Forms.TextBox')
+    $txt_t2_Search.Anchor               = 'Bottom, Right'
     $txt_t2_Search.Location             = '486, 482'
     $txt_t2_Search.Size                 = '254,  22'
     $txt_t2_Search.BorderStyle          = 'None'
@@ -2831,6 +2893,7 @@ Function ChangeLanguage
     $tab_page2.Controls.Add($txt_t2_Search)
 
     $txt_t2_Search_Outer                = (New-Object -TypeName 'System.Windows.Forms.TextBox')
+    $txt_t2_Search_Outer.Anchor         = 'Bottom, Right'
     $txt_t2_Search_Outer.Location       = '480, 477'
     $txt_t2_Search_Outer.Size           = '266,  27'
     $txt_t2_Search_Outer.Multiline      = $True
@@ -2839,6 +2902,7 @@ Function ChangeLanguage
     $tab_page2.Controls.Add($txt_t2_Search_Outer)
 
     $chk_t2_Search                      = (New-Object -TypeName 'System.Windows.Forms.CheckBox')
+    $chk_t2_Search.Anchor               = 'Bottom, Right'
     $chk_t2_Search.Location             = '480, 507'
     $chk_t2_Search.Size                 = '266,  17'
     $chk_t2_Search.Text                 = ($script:ToolLangINI['page2']['SearchCheck'])
@@ -2848,6 +2912,7 @@ Function ChangeLanguage
     $tab_page2.Controls.Add($chk_t2_Search)
 
     $lbl_t2_SelectedCount               = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t2_SelectedCount.Anchor        = 'Bottom, Left'
     $lbl_t2_SelectedCount.Location      = '  9, 538'
     $lbl_t2_SelectedCount.Size          = '193,  28'
     $lbl_t2_SelectedCount.Text          = ($script:ToolLangINI['page2']['Selected'])
@@ -2855,6 +2920,7 @@ Function ChangeLanguage
     $tab_Page2.Controls.Add($lbl_t2_SelectedCount)
 
     $lbl_t2_Select                      = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t2_Select.Anchor               = 'Bottom, Right'
     $lbl_t2_Select.Location             = '203, 538'
     $lbl_t2_Select.Size                 = '130,  28'
     $lbl_t2_Select.Text                 = ($script:ToolLangINI['page2']['Select'])
@@ -2862,6 +2928,7 @@ Function ChangeLanguage
     $tab_Page2.Controls.Add($lbl_t2_Select)
 
     $btn_t2_SelectAll                   = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t2_SelectAll.Anchor            = 'Bottom, Right'
     $btn_t2_SelectAll.Location          = '340, 538'
     $btn_t2_SelectAll.Size              = ' 38,  28'
     $btn_t2_SelectAll.Text              = ''
@@ -2870,6 +2937,7 @@ Function ChangeLanguage
     $tab_Page2.Controls.Add($btn_t2_SelectAll)
 
     $btn_t2_SelectInv                   = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t2_SelectInv.Anchor            = 'Bottom, Right'
     $btn_t2_SelectInv.Location          = '382, 538'
     $btn_t2_SelectInv.Size              = ' 38,  28'
     $btn_t2_SelectInv.Text              = ''
@@ -2878,6 +2946,7 @@ Function ChangeLanguage
     $tab_Page2.Controls.Add($btn_t2_SelectInv)
 
     $btn_t2_SelectNone                  = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t2_SelectNone.Anchor           = 'Bottom, Right'
     $btn_t2_SelectNone.Location         = '424, 538'
     $btn_t2_SelectNone.Size             = ' 38,  28'
     $btn_t2_SelectNone.Text             = ''
@@ -2886,12 +2955,14 @@ Function ChangeLanguage
     $tab_Page2.Controls.Add($btn_t2_SelectNone)
 
     $pic_t2_SelectSep                   = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
+    $pic_t2_SelectSep.Anchor            = 'Bottom, Right'
     $pic_t2_SelectSep.Location          = '474, 541'
     $pic_t2_SelectSep.Size              = '  1,  22'
     $pic_t2_SelectSep.BorderStyle       = 'FixedSingle'
     $tab_Page2.Controls.Add($pic_t2_SelectSep)
 
     $btn_t2_SelectReset                 = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t2_SelectReset.Anchor          = 'Bottom, Right'
     $btn_t2_SelectReset.Location        = '487, 538'
     $btn_t2_SelectReset.Size            = ' 38,  28'
     $btn_t2_SelectReset.Text            = ''
@@ -2900,6 +2971,7 @@ Function ChangeLanguage
     $tab_Page2.Controls.Add($btn_t2_SelectReset)
 
     $btn_t2_SetValues                   = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t2_SetValues.Anchor            = 'Bottom, Right'
     $btn_t2_SetValues.Location          = '628, 538'
     $btn_t2_SetValues.Size              = '125,  28'
     $btn_t2_SetValues.Text              = ($script:ToolLangINI['page2']['SetValues'])
@@ -2909,6 +2981,7 @@ Function ChangeLanguage
     $btn_t2_SetValues.BringToFront()
 
     $pic_t2_Background                  = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
+    $pic_t2_Background.Anchor           = 'Top, Bottom, Right'
     $pic_t2_Background.Location         = '474,  35'
     $pic_t2_Background.Size             = '279, 492'
     $pic_t2_Background.BackColor        = 'Window'
@@ -2917,6 +2990,7 @@ Function ChangeLanguage
     $tab_Page2.Controls.Add($pic_t2_Background)
 
     $lbl_t2_ChangesMade                 = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t2_ChangesMade.Anchor          = 'Bottom, Left, Right'
     $lbl_t2_ChangesMade.Location        = '102, 635'
     $lbl_t2_ChangesMade.Size            = '590,  25'
     $lbl_t2_ChangesMade.Text            = ($script:ToolLangINI['page2']['ChangeNote'])
@@ -2927,6 +3001,7 @@ Function ChangeLanguage
 #endregion
 #region TAB 3 - Enter Values For Checks
     $lbl_t3_ScriptSelection             = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t3_ScriptSelection.Anchor      = 'Top, Left, Right'
     $lbl_t3_ScriptSelection.Location    = '  9,   9'
     $lbl_t3_ScriptSelection.Size        = '744,  20'
     $lbl_t3_ScriptSelection.Text        = ($script:ToolLangINI['page3']['Title'])
@@ -2934,6 +3009,7 @@ Function ChangeLanguage
     $tab_Page3.Controls.Add($lbl_t3_ScriptSelection)
 
     $lbl_t3_NoChecks                    = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t3_NoChecks.Anchor             = 'Top, Bottom, Left, Right'
     $lbl_t3_NoChecks.Location           = '19, 218'
     $lbl_t3_NoChecks.Size               = '724, 50'
     $lbl_t3_NoChecks.Text               = ($script:ToolLangINI['page3']['SelectChecks'])
@@ -2944,6 +3020,7 @@ Function ChangeLanguage
     $tab_Page3.Controls.Add($lbl_t3_NoChecks)
 
     $tab_t3_Pages                       = (New-Object -TypeName 'System.Windows.Forms.TabControl')    # TabPages are generated automatically
+    $tab_t3_Pages.Anchor                = 'Top, Bottom, Left, Right'
     $tab_t3_Pages.Location              = '  9,  35'
     $tab_t3_Pages.Size                  = '744, 492'
     $tab_t3_Pages.Padding               = ' 10,   6'
@@ -2952,6 +3029,7 @@ Function ChangeLanguage
     $tab_Page3.Controls.Add($tab_t3_Pages)
 
     $lbl_t3_SectionTabs                 = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t3_SectionTabs.Anchor          = 'Bottom, Left'
     $lbl_t3_SectionTabs.Location        = '104, 538'
     $lbl_t3_SectionTabs.Size            = '190,  28'
     $lbl_t3_SectionTabs.Text            = ($script:ToolLangINI['page3']['SectionTabs'])
@@ -2959,6 +3037,7 @@ Function ChangeLanguage
     $tab_Page3.Controls.Add($lbl_t3_SectionTabs)
 
     $btn_t3_PrevTab                     = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t3_PrevTab.Anchor              = 'Bottom, Left'
     $btn_t3_PrevTab.Location            = '300, 538'
     $btn_t3_PrevTab.Size                = ' 75,  28'
     $btn_t3_PrevTab.Text                = ($script:ToolLangINI['page3']['Prev'])
@@ -2966,6 +3045,7 @@ Function ChangeLanguage
     $tab_Page3.Controls.Add($btn_t3_PrevTab)
 
     $btn_t3_NextTab                     = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t3_NextTab.Anchor              = 'Bottom, Left'
     $btn_t3_NextTab.Location            = '387, 538'
     $btn_t3_NextTab.Size                = ' 75,  28'
     $btn_t3_NextTab.Text                = ($script:ToolLangINI['page3']['Next'])
@@ -2973,24 +3053,17 @@ Function ChangeLanguage
     $tab_Page3.Controls.Add($btn_t3_NextTab)
 
     $btn_t3_Complete                    = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t3_Complete.Anchor             = 'Bottom, Right'
     $btn_t3_Complete.Location           = '628, 538'
     $btn_t3_Complete.Size               = '125,  28'
     $btn_t3_Complete.Text               = ($script:ToolLangINI['page3']['Complete'])
     $btn_t3_Complete.Enabled            = $False
     $btn_t3_Complete.Add_Click($btn_t3_Complete_Click)
     $tab_Page3.Controls.Add($btn_t3_Complete)
-
-    $btn_t3_HideDisabled                = (New-Object -TypeName 'System.Windows.Forms.Button')
-    $btn_t3_HideDisabled.Location       = '316, 635'
-    $btn_t3_HideDisabled.Size           = '162,  25'
-    $btn_t3_HideDisabled.Text           = ($script:ToolLangINI['hidedisabled']['Button'])
-    $btn_t3_HideDisabled.Enabled        = $False
-    $btn_t3_HideDisabled.Visible        = $False
-    $btn_t3_HideDisabled.Add_Click($btn_t3_HideDisabled_Click)
-    $MainFORM.Controls.Add($btn_t3_HideDisabled)    # On main form (not tab 3)
 #endregion
 #region TAB 4 - Generate Settings And QA Script
     $lbl_t4_Complete                    = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t4_Complete.Anchor             = 'Top, Left, Right'
     $lbl_t4_Complete.Location           = '  9,   9'
     $lbl_t4_Complete.Size               = '744,  20'
     $lbl_t4_Complete.Text               = ($script:ToolLangINI['page4']['Title'])
@@ -2998,6 +3071,7 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($lbl_t4_Complete)
 
     $lbl_t4_Complete_Info               = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t4_Complete_Info.Anchor        = 'Top, Left, Right'
     $lbl_t4_Complete_Info.Location      = '  9,  42'
     $lbl_t4_Complete_Info.Size          = '744, 250'
     $lbl_t4_Complete_Info.TextAlign     = 'TopLeft'
@@ -3005,6 +3079,7 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($lbl_t4_Complete_Info)
 
     $lbl_t4_ShortName                   = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t4_ShortName.Anchor            = 'Top, Left'
     $lbl_t4_ShortName.Location          = '  9, 325'
     $lbl_t4_ShortName.Size              = '266,  27'
     $lbl_t4_ShortName.TextAlign         = 'MiddleRight'
@@ -3012,6 +3087,7 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($lbl_t4_ShortName)
 
     $lbl_t4_CodeEg                      = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t4_CodeEg.Anchor               = 'Top, Left'
     $lbl_t4_CodeEg.Location             = '487, 325'
     $lbl_t4_CodeEg.Size                 = '266,  27'
     $lbl_t4_CodeEg.TextAlign            = 'MiddleLeft'
@@ -3019,6 +3095,7 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($lbl_t4_CodeEg)
 
     $txt_t4_ShortCode                   = (New-Object -TypeName 'System.Windows.Forms.TextBox')
+    $txt_t4_ShortCode.Anchor            = 'Top, Left'
     $txt_t4_ShortCode.Location          = '284, 330'    # +3, +5
     $txt_t4_ShortCode.Size              = '194,  22'    # -6, -5
     $txt_t4_ShortCode.TextAlign         = 'Center'
@@ -3032,6 +3109,7 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($txt_t4_ShortCode)
 
     $txt_t4_SC_Outer                    = (New-Object -TypeName 'System.Windows.Forms.TextBox')
+    $txt_t4_SC_Outer.Anchor             = 'Top, Left'
     $txt_t4_SC_Outer.Location           = '281, 325'
     $txt_t4_SC_Outer.Size               = '200,  27'
     $txt_t4_SC_Outer.Multiline          = $True
@@ -3040,6 +3118,7 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($txt_t4_SC_Outer)    # Border wrapper for ShortCode box to make it look bigger
 
     $lbl_t4_ReportTitle                 = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t4_ReportTitle.Anchor          = 'Top, Left'
     $lbl_t4_ReportTitle.Location        = '  9, 367'
     $lbl_t4_ReportTitle.Size            = '266,  27'
     $lbl_t4_ReportTitle.TextAlign       = 'MiddleRight'
@@ -3047,6 +3126,7 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($lbl_t4_ReportTitle)
 
     $lbl_t4_QAReport                    = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t4_QAReport.Anchor             = 'Top, Left'
     $lbl_t4_QAReport.Location           = '487, 367'
     $lbl_t4_QAReport.Size               = '266,  27'
     $lbl_t4_QAReport.TextAlign          = 'MiddleLeft'
@@ -3054,6 +3134,7 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($lbl_t4_QAReport)
 
     $txt_t4_ReportTitle                 = (New-Object -TypeName 'System.Windows.Forms.TextBox')
+    $txt_t4_ReportTitle.Anchor          = 'Top, Left'
     $txt_t4_ReportTitle.Location        = '284, 372'    # +3, +5
     $txt_t4_ReportTitle.Size            = '194,  22'    # -6, -5
     $txt_t4_ReportTitle.TextAlign       = 'Center'
@@ -3062,6 +3143,7 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($txt_t4_ReportTitle)
 
     $txt_t4_RT_Outer                    = (New-Object -TypeName 'System.Windows.Forms.TextBox')
+    $txt_t4_RT_Outer.Anchor             = 'Top, Left'
     $txt_t4_RT_Outer.Location           = '281, 367'
     $txt_t4_RT_Outer.Size               = '200,  27'
     $txt_t4_RT_Outer.Multiline          = $True
@@ -3070,6 +3152,7 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($txt_t4_RT_Outer)    # Border wrapper for ReportTitle box to make it look bigger
 
     $btn_t4_Additional                  = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t4_Additional.Anchor           = 'Bottom, Left'
     $btn_t4_Additional.Location         = '316, 635'
     $btn_t4_Additional.Size             = '162,  25'
     $btn_t4_Additional.Text             = ($script:ToolLangINI['additional']['Button'])
@@ -3079,6 +3162,7 @@ Function ChangeLanguage
     $MainFORM.Controls.Add($btn_t4_Additional)    # On main form (not tab 4)
 
     $btn_t4_Save                        = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t4_Save.Anchor                 = 'Top, Left'
     $btn_t4_Save.Location               = '281, 421'
     $btn_t4_Save.Size                   = '200,  35'
     $btn_t4_Save.Text                   = ($script:ToolLangINI['page4']['SaveSettings'])
@@ -3087,6 +3171,7 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($btn_t4_Save)
 
     $btn_t4_Generate                    = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_t4_Generate.Anchor             = 'Top, Left'
     $btn_t4_Generate.Location           = '281, 471'
     $btn_t4_Generate.Size               = '200,  35'
     $btn_t4_Generate.Text               = ($script:ToolLangINI['page4']['GenerateScript'])
@@ -3095,6 +3180,7 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($btn_t4_Generate)
 
     $chk_t4_GenerateMini                = (New-Object -TypeName 'System.Windows.Forms.CheckBox')
+    $chk_t4_GenerateMini.Anchor         = 'Top, Left'
     $chk_t4_GenerateMini.Location       = '487, 471'
     $chk_t4_GenerateMini.Size           = '266,  36'    # One more than button height
     $chk_t4_GenerateMini.Text           = ($script:ToolLangINI['page4']['GenerateMini'])
@@ -3104,6 +3190,7 @@ Function ChangeLanguage
     $tab_Page4.Controls.Add($chk_t4_GenerateMini)
 
     $lbl_t4_GenerateStatus              = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t4_GenerateStatus.Anchor       = 'Top, Left'
     $lbl_t4_GenerateStatus.Location     = '  9, 512'
     $lbl_t4_GenerateStatus.Size         = '744,  20'
     $lbl_t4_GenerateStatus.TextAlign    = 'MiddleCenter'
