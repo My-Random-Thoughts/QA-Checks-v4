@@ -413,11 +413,11 @@ ForEach ($qa In ($qaChecks | Sort-Object -Property 'Name'))
                 'desc' {                                                                 [void]$xmlHelp.Append("<description>$value</description>"); Break }
                 'appl' { $value = ($lngStrings['applyto'][$value.ToString()]).Trim("'"); [void]$xmlHelp.Append("<applies>$value</applies>");         Break }
 
-                'p0*'  { $addVal.p += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }    # Collect any result strings
-                'w0*'  { $addVal.w += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }
-                'f0*'  { $addVal.f += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }
-                'm0*'  { $addVal.m += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }
-                'n0*'  { $addVal.n += ($($lngStrings[$checkName][$key]).ToString().Trim("'")) + '!n'; Break }
+                'p0*'  { $addVal.p += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }    # Collect any result strings
+                'w0*'  { $addVal.w += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }
+                'f0*'  { $addVal.f += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }
+                'm0*'  { $addVal.m += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }
+                'n0*'  { $addVal.n += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }
 
                 Default { }    # Ignore everything else
             }
