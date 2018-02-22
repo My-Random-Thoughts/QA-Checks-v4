@@ -51,8 +51,8 @@ Function tol-03-sccm-installed
             Else
             {
                 $result.result  = $script:lang['Fail']
-                $result.message = $script:lang['dt01']
-                $result.data    = $script:lang['dt04']
+                $result.message = $script:lang['f001']
+                $result.data    = $script:lang['dt03']
                 Return $result
             }
 
@@ -60,20 +60,20 @@ Function tol-03-sccm-installed
             If ($portTest -eq $true)
             {
                 $result.result  =    $script:lang['Pass']
-                $result.message =    $script:lang['dt01']
-                $result.data    = ($($script:lang['dt02']) -f $($regVal.HttpsPort), $($regVal.SMSSLP).ToLower())
+                $result.message =    $script:lang['p001']
+                $result.data    = ($($script:lang['dt01']) -f $($regVal.HttpsPort), $($regVal.SMSSLP).ToLower())
             }
             Else
             {
                 $result.result  =    $script:lang['Fail']
-                $result.message =    $script:lang['dt01']
-                $result.data    = ($($script:lang['dt03']) -f $($regVal.HttpsPort), $($regVal.SMSSLP).ToLower())
+                $result.message =    $script:lang['f001']
+                $result.data    = ($($script:lang['dt02']) -f $($regVal.HttpsPort), $($regVal.SMSSLP).ToLower())
             }
         }
         Else
         {
             $result.result  = $script:lang['Fail']
-            $result.message = $script:lang['f001']
+            $result.message = $script:lang['f002']
         }
     }
     Catch

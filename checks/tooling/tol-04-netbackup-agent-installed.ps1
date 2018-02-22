@@ -55,7 +55,7 @@ Function tol-04-netbackup-agent-installed
         If ([string]::IsNullOrEmpty($verCheck) -eq $false)
         {
             $result.result  =    $script:lang['Pass']
-            $result.message =    $script:lang['dt01']
+            $result.message =    $script:lang['p001']
             $result.data    = ($($script:lang['dt02']) -f $verCheck.Version)
 
             [string[]]$ServerNames = @(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Veritas\NetBackup\CurrentVersion\Config' -Name 'Server' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty 'Server')
@@ -77,7 +77,7 @@ Function tol-04-netbackup-agent-installed
                     If ([string]::IsNullOrEmpty($verCheck) -eq $false)
                     {
                         $result.result  =    $script:lang['Fail']
-                        $result.message =    $script:lang['dt05']
+                        $result.message =    $script:lang['f001']
                         $result.data    = ($($script:lang['dt06']) -f $_)
                         $found          =    $true
                     }
@@ -86,7 +86,7 @@ Function tol-04-netbackup-agent-installed
                 If (Check-IsDomainController -eq $true)
                 {
                     $result.result  = $script:lang['Fail']
-                    $result.message = $script:lang['dt05']
+                    $result.message = $script:lang['f001']
                     $result.data    = $script:lang['dt07']
                     $found          = $true
                 }
@@ -102,8 +102,8 @@ Function tol-04-netbackup-agent-installed
             {
                 # Physical server
                 $result.result  = $script:lang['Fail']
-                $result.message = $script:lang['dt05']
-                $result.data    = $script:lang['dt09']
+                $result.message = $script:lang['f001']
+                $result.data    = $script:lang['dt01']
             }
         }
     }
