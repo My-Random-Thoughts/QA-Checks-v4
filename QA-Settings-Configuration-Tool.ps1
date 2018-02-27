@@ -56,7 +56,7 @@ Clear-Host
 [string]   $script:SelectedToolLang = ''
 [string]   $script:regExMatch       = '((?:.|\s)+?)(?:(?:[A-Z\- ]+:\n)|(?:#>))'    # Used for all RegEx search matching used in the check comments
 [string]   $script:toolName         = 'QA Settings Configuration Tool'             # QASCT Name
-[string]   $script:toolVersion      = 'v4.18.2102'                                 # QASCT Version (v4.yy.mmdd)
+[string]   $script:toolVersion      = 'v4.18.0226'                                 # QASCT Version (v4.yy.mmdd)
 
 ###################################################################################################
 ##                                                                                               ##
@@ -374,27 +374,92 @@ Function Show-InputForm
 #region Form Scripts
     $ChkButton_Click = {
         If ($ChkButton.Text -eq $($script:ToolLangINI['input']['CheckAll'])) {
-            $ChkButton.Text = $($script:ToolLangINI['input']['CheckNone'])
+            $ChkButton.Text   = $($script:ToolLangINI['input']['CheckNone'])
             [boolean]$checked = $True
         } Else {
-            $ChkButton.Text = $($script:ToolLangINI['input']['CheckAll'])
+            $ChkButton.Text   = $($script:ToolLangINI['input']['CheckAll'])
             [boolean]$checked = $False
         }
-        ForEach ($Control In $frm_Input.Controls) { If ($control -is [System.Windows.Forms.CheckBox]) { $control.Checked = $checked } }
+        ForEach ($Control In $floPanel.Controls) { If ($control -is [System.Windows.Forms.CheckBox]) { $control.Checked = $checked } }
+    }
+
+    # Start form validation and make sure everything entered is correct
+    $btn_Accept_Click = {
+        [string[]]$currentValues  = @('')
+        [boolean] $ValidatedInput = $True
+        ForEach ($Control In $floPanel.Controls)
+        {
+            If (($Control -is [System.Windows.Forms.TextBox]) -and ($Control.Visible -eq $True))
+            {
+                $Control.BackColor = 'Window'
+                If (($Type -eq 'LIST') -and ($Control.Text.Contains(';') -eq $True))
+                {
+                    [string[]]$ControlText = ($Control.Text).Split(';')
+                    $Control.Text = ''    # Remove current data so that it can be used as a landing control for the split data
+                    ForEach ($item In $ControlText) { AddButton_Click -Value $item -Override $false -AddType 'TEXT' }
+                }
+            }
+        }
+
+        # Reset Control Loop for any new fields that may have been added
+        [string]$validationText = $($script:ToolLangINI['input']['ValidationFail'])
+        ForEach ($Control In $floPanel.Controls)
+        {
+            If (($Control -is [System.Windows.Forms.TextBox]) -and ($Control.Visible -eq $True))
+            {
+                $ValidatedInput = $(ValidateInputBox -Control $Control)
+                If ($ValidatedInput -eq $True)
+                {
+                    If (($Type -eq 'LIST') -and (([string]::IsNullOrEmpty($Control.Text) -eq $false) -and ($currentValues -contains ($Control.text))))
+                    {
+                        $ValidatedInput = $false
+                        $validationText = $($script:ToolLangINI['input']['DuplicateFound'])
+                    }
+                    Else { $currentValues += $Control.Text }
+                }
+
+                If ($ValidatedInput -eq $false)
+                {
+                    $Control.Focus()
+                    $Control.SelectAll()
+                    $ToolTip.Show($validationText, $Control, 12, $Control.Height, 2500)
+                    $Control.BackColor = 'Info'
+                    Break
+                }
+            }
+        }
+
+        $currentValues = $null
+        If ($ValidatedInput -eq $True) { $frm_Input.DialogResult = [System.Windows.Forms.DialogResult]::OK }
+    }
+
+    $frm_Input_Resize = {
+        # Change textbox widths for the scroll bar
+        If ($Type -eq 'LIST')
+        {
+            ForEach ($Control In $floPanel.Controls)
+            {
+                If ($Control -is [System.Windows.Forms.TextBox])
+                {
+                    If ($floPanel.VerticalScroll.Visible -eq $false) { $Control.Width = 340                                                                    }
+                    Else                                             { $Control.Width = 340 - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth }
+                }
+            }
+        }
     }
 
     [int]$numberOfTextBoxes = 0
-    $AddButton_Click = { AddButton_Click -Value '' -Override $false -Type 'TEXT' }
-    Function AddButton_Click ([string]$Value, [boolean]$Override, [string]$Type, [string]$ItemTip)
+    $AddButton_Click = { AddButton_Click -Value '' -Override $false -AddType 'TEXT' }
+    Function AddButton_Click ([string]$Value, [boolean]$Override, [string]$AddType, [string]$ItemTip)
     {
         [int]$BoxNumber = 0
-        ForEach ($Control In $frm_Input.Controls) { If (($Control -is [System.Windows.Forms.TextBox]) -or ($Control -is [System.Windows.Forms.CheckBox])) { $BoxNumber++ } }
+        ForEach ($Control In $floPanel.Controls) { If (($Control -is [System.Windows.Forms.TextBox]) -or ($Control -is [System.Windows.Forms.CheckBox])) { $BoxNumber++ } }
         If ($BoxNumber -eq ($MaxNumberInputBoxes - 1)) { $AddButton.Visible = $false }    # Hide 'Add' button if required
         If ($BoxNumber -eq ($MaxNumberInputBoxes)) { Return }
 
-        If ($Type -eq 'TEXT')
+        If ($AddType -eq 'TEXT')
         {
-            ForEach ($control In $frm_Input.Controls) {
+            ForEach ($control In $floPanel.Controls) {
                 If ($control -is [System.Windows.Forms.TextBox]) {
                     [System.Windows.Forms.TextBox]$isEmtpy = $null
                     If ([string]::IsNullOrEmpty($control.Text) -eq $True) { $isEmtpy = $control; Break }
@@ -412,132 +477,66 @@ Function Show-InputForm
 
         # Increase form size, move buttons down, add new field
         $numberOfTextBoxes++
-        $frm_Input.ClientSize       = "394, $(147 + ($BoxNumber * 26))"
-        $btn_Accept.Location        = "307, $(110 + ($BoxNumber * 26))"
-        $btn_Cancel.Location        = "220, $(110 + ($BoxNumber * 26))"
-
-        If ($Type -eq 'TEXT')
+        If ($AddType -eq 'TEXT')
         {
-            $AddButton.Location     = " 39, $(110 + ($BoxNumber * 26))"
-
             # Add new counter label
             $labelCounter           = (New-Object -TypeName 'System.Windows.Forms.Label')
-            $labelCounter.Location  = " 12, $(75 + ($BoxNumber * 26))"
             $labelCounter.Size      = ' 21,   20'
             $labelCounter.Font      = $sysFont
             $labelCounter.Text      = "$($BoxNumber + 1):"
-            $labelCounter.TextAlign = 'MiddleRight'
-            $frm_Input.Controls.Add($labelCounter)
+            $labelCounter.TextAlign = 'BottomRight'
+            $labelCounter.Margin    = '1, 1, 6, 2'
+            $labelCounter.Padding   = '0, 0, 0, 0'
+            $floPanel.Controls.Add($labelCounter)
 
             # Add new text box and select it for focus
             $textBox                = (New-Object -TypeName 'System.Windows.Forms.TextBox')
-            $textBox.Location       = " 39, $(75 + ($BoxNumber * 26))"
-            $textBox.Size           = '343,   20'
+            $textBox.Size           = '340, 20'
             $textBox.Font           = $sysFont
             $textBox.Name           = "textBox$BoxNumber"
             $textBox.Text           = $Value.Trim()
-            $frm_Input.Controls.Add($textBox)
-            $frm_Input.Controls["textbox$BoxNumber"].Select()
+            $textBox.Margin         = '1, 1, 0, 2'
+            $textBox.Padding        = '0, 0, 0, 0'
+
+            $floPanel.Controls.Add($textBox)
+            $floPanel.Controls["textbox$BoxNumber"].Select()
+            $frm_Input_Resize.Invoke()
         }
-        ElseIf ($Type -eq 'CHECK')
+        ElseIf ($AddType -eq 'CHECK')
         {
             # Add new check box
             $chkBox                 = (New-Object -TypeName 'System.Windows.Forms.CheckBox')
-            $chkBox.Location        = " 12, $(75 + ($BoxNumber * 26))"
-            $chkBox.Size            = '370,   20'
+            $chkBox.Size            = "$(370 - 2 - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth), 20"
             $chkBox.Font            = $sysFont
             $chkBox.Name            = "chkBox$BoxNumber"
             $chkBox.Text            = $Value + $ItemTip
             $chkBox.TextAlign       = 'MiddleLeft'
-            $frm_Input.Controls.Add($chkBox)
-            $frm_Input.Controls["chkbox$BoxNumber"].Select()
+            $chkBox.Margin          = '1, 1, 0, 5'
+            $chkBox.Padding         = '0, 0, 0, 0'
+            $floPanel.Controls.Add($chkBox)
+            $floPanel.Controls["chkbox$BoxNumber"].Select()
         }
         Else { }
     }
 
     Function Change-Form ([string]$ChangeTo)
     {
-        # Hide Fields
-        $pic_InvalidValue.Visible = $False
-
-        # Show Fields
-        $textBox.Visible = $True
-        $textBox.Select()
-
-        If ($Type -eq 'Large')
-        {
-            # Resize form
-            $frm_Input.ClientSize = "394, $(147 + 104)"
-            $btn_Accept.Location  = "307, $(110 + 104)"
-            $btn_Cancel.Location  = "220, $(110 + 104)"
+        If (($Type -eq 'Check') -or ($Type -eq 'List') -or ($Type -eq 'Large'))
+        {   # Large form
+            $frm_Input.ClientSize = '394, 251'
+            $btn_Accept.Location  = '307, 214'
+            $btn_Cancel.Location  = '220, 214'
         }
         Else
-        {
-            # Resize form
+        {   # Small form
             $frm_Input.ClientSize = '394, 147'
             $btn_Accept.Location  = '307, 110'
             $btn_Cancel.Location  = '220, 110'
         }
-    }
 
-    # Start form validation and make sure everything entered is correct
-    $btn_Accept_Click = {
-        [string[]]$currentValues  = @('')
-        [boolean] $ValidatedInput = $True
-
-        ForEach ($Control In $frm_Input.Controls)
-        {
-            If (($Control -is [System.Windows.Forms.TextBox]) -and ($Control.Visible -eq $True))
-            {
-                $Control.BackColor = 'Window'
-                If (($Type -eq 'LIST') -and ($Control.Text.Contains(';') -eq $True))
-                {
-                    [string[]]$ControlText = ($Control.Text).Split(';')
-                    $Control.Text = ''    # Remove current data so that it can be used as a landing control for the split data
-                    ForEach ($item In $ControlText) { AddButton_Click -Value $item -Override $false -Type 'TEXT' }
-                }
-            }
-        }
-
-        # Reset Control Loop for any new fields that may have been added
-        ForEach ($Control In $frm_Input.Controls)
-        {
-            If (($Control -is [System.Windows.Forms.TextBox]) -and ($Control.Visible -eq $True))
-            {
-                $ValidatedInput = $(ValidateInputBox -Control $Control)
-                $pic_InvalidValue.Image = $img_MainForm.Images[14]
-                $pic_InvalidValue.Tag   = $($script:ToolLangINI['input']['ValidationFail'])
-                $ToolTip.SetToolTip($pic_InvalidValue, $pic_InvalidValue.Tag)
-
-                If ($ValidatedInput -eq $True)
-                {
-                    If (($Type -eq 'LIST') -and (([string]::IsNullOrEmpty($Control.Text) -eq $false) -and ($currentValues -contains ($Control.text))))
-                    {
-                        $ValidatedInput = $false
-                        $pic_InvalidValue.Image = $img_MainForm.Images[13]
-                        $pic_InvalidValue.Tag   = $($script:ToolLangINI['input']['DuplicateFound'])
-                        $ToolTip.SetToolTip($pic_InvalidValue, $pic_InvalidValue.Tag)
-                        $Control.BackColor = 'Info'
-                    }
-                    Else { $currentValues += $Control.Text }
-                }
-
-                If ($ValidatedInput -eq $false)
-                {
-                    [int]$pos = $($($Control.Left) + $($Control.Width) - ($pic_InvalidValue.Width + 3))
-                    $pic_InvalidValue.Location = "$pos, $([math]::Round(($Control.Height -16) / 2) + $Control.Top)"
-                    $pic_InvalidValue.Visible  = $True
-                    $Control.Focus()
-                    $Control.SelectAll()
-                    $ToolTip.Show($pic_InvalidValue.Tag, $pic_InvalidValue, 10, 8, 2500)
-                    $Control.BackColor = 'Info'
-                    Break
-                }
-            }
-        }
-
-        $currentValues = $null
-        If ($ValidatedInput -eq $True) { $frm_Input.DialogResult = [System.Windows.Forms.DialogResult]::OK }
+        $frm_Input.MinimumSize = $frm_Input.Size
+        If (($Type -eq 'List') -or ($Type -eq 'Check')) { $frm_Input.MaximumSize = "$($frm_Input.Width), 9999"; $frm_Input.SizeGripStyle = [System.Windows.Forms.SizeGripStyle]::Show }
+        Else                                            { $frm_Input.MaximumSize =    $frm_Input.Size         ; $frm_Input.SizeGripStyle = [System.Windows.Forms.SizeGripStyle]::Hide }
     }
 
     Function ValidateInputBox ([System.Windows.Forms.Control]$Control)
@@ -607,13 +606,14 @@ Function Show-InputForm
             $btn_Accept.Remove_Click($btn_Accept_Click)
             $AddButton.Remove_Click($AddButton_Click)
         } Catch {}
+        $frm_Input.Remove_Resize($frm_Input_Resize)
         $frm_Input.Remove_FormClosed($frm_Input_Cleanup_FormClosed)
     }
 #endregion
 #region Input Form Controls
     [System.Windows.Forms.Application]::EnableVisualStyles()
     $frm_Input                      = (New-Object -TypeName 'System.Windows.Forms.Form')
-    $frm_Input.FormBorderStyle      = 'FixedDialog'
+    $frm_Input.FormBorderStyle      = 'SizableToolWindow'
     $frm_Input.Text                 = $Title
     $frm_Input.MaximizeBox          = $False
     $frm_Input.MinimizeBox          = $False
@@ -622,55 +622,58 @@ Function Show-InputForm
     $frm_Input.AutoScaleDimensions  = '6, 13'
     $frm_Input.AutoScaleMode        = 'None'
     $frm_Input.ClientSize           = '394, 147'    # 400 x 175
-    $frm_Input.StartPosition        = 'CenterParent'
+    $frm_Input.StartPosition        = 'CenterScreen' # 'CenterParent'
+    $frm_Input.Add_Resize($frm_Input_Resize)
 
-    $ToolTip                       = (New-Object -TypeName 'System.Windows.Forms.ToolTip')
-
-    $pic_InvalidValue              = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
-    $pic_InvalidValue.BackColor    = 'Info'
-    $pic_InvalidValue.Location     = '  0,   0'
-    $pic_InvalidValue.Size         = ' 16,  16'
-    $pic_InvalidValue.Visible      = $false
-    $pic_InvalidValue.TabStop      = $False
-    $pic_InvalidValue.BringToFront()
-    $frm_Input.Controls.Add($pic_InvalidValue)
-
-    $lbl_Description               = (New-Object -TypeName 'System.Windows.Forms.Label')
-    $lbl_Description.Location      = ' 12,  12'
-    $lbl_Description.Size          = '370,  48'
-    $lbl_Description.Font          = $sysFont
-    $lbl_Description.Text          = $($Description.Trim())
+    $ToolTip                        = (New-Object -TypeName 'System.Windows.Forms.ToolTip')
+                                    
+    $lbl_Description                = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_Description.Location       = ' 12,  12'
+    $lbl_Description.Size           = '370,  48'
+    $lbl_Description.Font           = $sysFont
+    $lbl_Description.Text           = $($Description.Trim())
     $frm_Input.Controls.Add($lbl_Description)
 
     If ($Validation -ne 'None')
     {
-        $lbl_Validation            = (New-Object -TypeName 'System.Windows.Forms.Label')
-        $lbl_Validation.Location   = '212,  60'
-        $lbl_Validation.Size       = '170,  15'
-        $lbl_Validation.Font       = $sysFont
-        $lbl_Validation.Text       = "$($script:ToolLangINI['input']['Validation']) $($script:ToolLangINI['input'][$Validation])"
-        $lbl_Validation.TextAlign  = 'BottomRight'
+        $lbl_Validation             = (New-Object -TypeName 'System.Windows.Forms.Label')
+        $lbl_Validation.Location    = '212,  60'
+        $lbl_Validation.Size        = '170,  15'
+        $lbl_Validation.Font        = $sysFont
+        $lbl_Validation.Text        = "$($script:ToolLangINI['input']['Validation']) $($script:ToolLangINI['input'][$Validation])"
+        $lbl_Validation.TextAlign   = 'BottomRight'
         $frm_Input.Controls.Add($lbl_Validation)
     }
 
-    $btn_Accept                    = (New-Object -TypeName 'System.Windows.Forms.Button')
-    $btn_Accept.Location           = '307, 110'
-    $btn_Accept.Size               = ' 75,  25'
-    $btn_Accept.Font               = $sysFont
-    $btn_Accept.Text               = $($script:ToolLangINI['input']['OK'])
+    $btn_Accept                     = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_Accept.Location            = '307, 110'
+    $btn_Accept.Size                = ' 75,  25'
+    $btn_Accept.Font                = $sysFont
+    $btn_Accept.Text                = $($script:ToolLangINI['input']['OK'])
+    $btn_Accept.Anchor              = 'Bottom, Right'
     $btn_Accept.Add_Click($btn_Accept_Click)
     If ($Type -ne 'LARGE') { $frm_Input.AcceptButton = $btn_Accept }
     $frm_Input.Controls.Add($btn_Accept)
 
-    $btn_Cancel                    = (New-Object -TypeName 'System.Windows.Forms.Button')
-    $btn_Cancel.Location           = '220, 110'
-    $btn_Cancel.Size               = ' 75,  25'
-    $btn_Cancel.Font               = $sysFont
-    $btn_Cancel.Text               = $($script:ToolLangINI['input']['Cancel'])
-    $btn_Cancel.DialogResult       = [System.Windows.Forms.DialogResult]::Cancel
+    $btn_Cancel                     = (New-Object -TypeName 'System.Windows.Forms.Button')
+    $btn_Cancel.Location            = '220, 110'
+    $btn_Cancel.Size                = ' 75,  25'
+    $btn_Cancel.Font                = $sysFont
+    $btn_Cancel.Text                = $($script:ToolLangINI['input']['Cancel'])
+    $btn_Cancel.Anchor              = 'Bottom, Right'
+    $btn_Cancel.DialogResult        = [System.Windows.Forms.DialogResult]::Cancel
     $frm_Input.CancelButton         = $btn_Cancel
     $frm_Input.Controls.Add($btn_Cancel)
     $frm_Input.Add_FormClosed($frm_Input_Cleanup_FormClosed)
+
+    $floPanel                       = (New-Object -TypeName 'System.Windows.Forms.FlowLayoutPanel')
+    $floPanel.Location              = ' 11,  74'
+    $floPanel.Size                  = '372,  26'
+    $floPanel.AutoScroll            = $True
+    $floPanel.Padding               = '0, 0, 0, 0'
+    $floPanel.AutoScrollMargin      = '0, 0'
+    $floPanel.Anchor                = 'Top, Bottom, Left, Right'
+    $frm_Input.Controls.Add($floPanel)
 #endregion
 #region Input Form Controls Part 2
     [string]$ItemTip = ''
@@ -684,26 +687,28 @@ Function Show-InputForm
 
             # Add 'Add' button
             $AddButton              = (New-Object -TypeName 'System.Windows.Forms.Button')
-            $AddButton.Location     = " 39, $(110 + ($numberOfTextBoxes * 26))"
-            $AddButton.Size         = ' 75,   25'
+            $AddButton.Location     = " 39, $($btn_Accept.Top)"
+            $AddButton.Size         = ' 75,  25'
             $AddButton.Font         = $sysFont
             $AddButton.Text         = $($script:ToolLangINI['input']['Add'])
+            $AddButton.Anchor       = 'Bottom, Left'
             $AddButton.Add_Click($AddButton_Click)
             $frm_Input.Controls.Add($AddButton)
 
             # Add initial textboxes
-            For ($i = 0; $i -le $numberOfTextBoxes; $i++) { AddButton_Click -Value ($CurrentValue[$i]) -Override $True -Type 'TEXT' }
-            $frm_Input.Controls['textbox0'].Select()
+            For ($i = 0; $i -le $numberOfTextBoxes; $i++) { AddButton_Click -Value ($CurrentValue[$i]) -Override $True -AddType 'TEXT' }
+            $floPanel.Controls['textbox0'].Select()
             Break
         }
 
         'CHECK' {
             # Add 'Check All' button
             $ChkButton              = (New-Object -TypeName 'System.Windows.Forms.Button')
-            $ChkButton.Location     = " 12, $(110 + (($InputList.Count -1) * 26))"
-            $ChkButton.Size         = '125,   25'
+            $ChkButton.Location     = " 12, $($btn_Accept.Top)"
+            $ChkButton.Size         = '125,  25'
             $ChkButton.Font         = $sysFont
             $ChkButton.Text         = $($script:ToolLangINI['input']['CheckAll'])
+            $ChkButton.Anchor       = 'Bottom, Left'
             $ChkButton.Add_Click($ChkButton_Click)
             $frm_Input.Controls.Add($ChkButton)
 
@@ -712,10 +717,11 @@ Function Show-InputForm
             If ($InputDescription -ne '') { For ($x=0;$x-lt$InputList.Count;$x++) { ForEach ($iDec In $InputDescription.Split('|')) { If ($iDec.StartsWith($InputList[$x] + ': ') -eq $true) { $InputList[$x] = $iDec } } } }
             ForEach ($item In $InputList)
             {
-                AddButton_Click -Value ($item.Trim()) -Override $True -Type 'CHECK'
-                If ([string]::IsNullOrEmpty($CurrentValue) -eq $false) { If ($CurrentValue.Contains($item.Split(':')[0].Trim())) { $frm_Input.Controls["chkBox$i"].Checked = $True } }
+                AddButton_Click -Value ($item.Trim()) -Override $True -AddType 'CHECK'
+                If ([string]::IsNullOrEmpty($CurrentValue) -eq $false) { If ($CurrentValue.Contains($item.Split(':')[0].Trim())) { $floPanel.Controls["chkBox$i"].Checked = $True } }
                 $i++
             }
+            $floPanel.Controls['chkBox0'].Select()
             Break
         }
 
@@ -724,11 +730,12 @@ Function Show-InputForm
             If ($InputDescription -ne '') { For ($x=0;$x-lt$InputList.Count;$x++) { ForEach ($iDec In $InputDescription.Split('|')) { If ($iDec.StartsWith($InputList[$x] + ': ') -eq $true) { $InputList[$x] = $iDec } } } }
 
             $comboBox               = (New-Object -TypeName 'System.Windows.Forms.ComboBox')
-            $comboBox.Location      = ' 12,  75'
             $comboBox.Size          = '370,  21'
             $comboBox.Font          = $sysFont
             $comboBox.DropDownStyle = 'DropDownList'
-            $frm_Input.Controls.Add($comboBox)
+            $comboBox.Margin        = '1, 1, 1, 1'
+            $comboBox.Padding       = '0, 0, 0, 0'
+            $floPanel.Controls.Add($comboBox)
             [void]$comboBox.Items.AddRange(($InputList.Trim()))
             $frm_Input.Add_Shown({$comboBox.Select()})
             $comboBox.SelectedIndex = -1
@@ -739,43 +746,39 @@ Function Show-InputForm
         'LARGE' {
             # Multi-line text entry
             $textBox                = (New-Object -TypeName 'System.Windows.Forms.TextBox')
-            $textBox.Location       = ' 12,  75'
-            $textBox.Size           = '370, 124'
+            $textBox.Size           = '370, 127'
             $textBox.Font           = $sysFont
             $textBox.Multiline      = $True
             $textBox.ScrollBars     = 'Vertical'
-            $frm_Input.Controls.Add($textBox)
+            $textBox.Margin         = '1, 1, 1, 1'
+            $textBox.Padding        = '0, 0, 0, 0'
+            $floPanel.Controls.Add($textBox)
             $frm_Input.Add_Shown({$textBox.Select()})
+            $textBox.Text           = (($CurrentValue.Trim()) -join "`r`n")
             $textBox.Select()
-
-            # Resize form
-            $frm_Input.Height      +=               104      # 
-            $btn_Accept.Location    = "307, $(110 + 104)"    # 104 comes from 4 x 26
-            $btn_Cancel.Location    = "220, $(110 + 104)"    #
             Break
         }
 
         'SIMPLE' {
             # Add default text box
             $textBox                = (New-Object -TypeName 'System.Windows.Forms.TextBox')
-            $textBox.Location       = ' 12,  75'
             $textBox.Size           = '370,  20'
+            $textBox.Margin         = '1, 1, 1, 1'
+            $textBox.Padding        = '0, 0, 0, 0'
             $textBox.Font           = $sysFont
-            $frm_Input.Controls.Add($textBox)
+            $floPanel.Controls.Add($textBox)
+            $textBox.Text           = (($CurrentValue.Trim()) -join "`r`n")
             $textBox.Select()
             Break
         }
         Default { Write-Warning "Input Form: Invalid Type: $Type" }
     }
 
-    If (('SIMPLE', 'LARGE') -contains $Type)
-    {
-        If ([string]::IsNullOrEmpty($CurrentValue) -eq $false) { $textBox.Text = (($CurrentValue.Trim()) -join "`r`n") }
-        Change-Form -ChangeTo 'Simple'
-    }
+    Change-Form -ChangeTo $Type
 #endregion
 #region Show Form And Return Value
     ForEach ($control In $frm_Input.Controls) { $control.Font = $sysFont; Try { $control.FlatStyle = 'Standard' } Catch {} }
+    ForEach ($control In $floPanel.Controls)  { $control.Font = $sysFont; Try { $control.FlatStyle = 'Standard' } Catch {} }
     $result = $frm_Input.ShowDialog($MainForm)
 
     If ($result -eq [System.Windows.Forms.DialogResult]::OK)
@@ -784,13 +787,13 @@ Function Show-InputForm
         {
             'LIST'   {
                 [string[]]$return = @()
-                ForEach ($control In $frm_Input.Controls) { If ($control -is [System.Windows.Forms.TextBox]) {
+                ForEach ($control In $floPanel.Controls) { If ($control -is [System.Windows.Forms.TextBox]) {
                     If ([string]::IsNullOrEmpty($control.Text) -eq $false) { $return += ($($control.Text.Trim())) } }
                 } Return $return
             }
             'CHECK'  {
                 [string[]]$return = @()
-                ForEach ($Control In $frm_Input.Controls) { If ($control -is [System.Windows.Forms.CheckBox]) {
+                ForEach ($Control In $floPanel.Controls) { If ($control -is [System.Windows.Forms.CheckBox]) {
                     If ($control.Checked -eq $True) { $return += ($($control.Text.Split(':')[0].Trim())) } }
                 } Return $return
             }
@@ -1100,8 +1103,8 @@ Function Show-AdditionalOptions ()
     $ext_Page4.Controls.Add($btn_Module)
 
     $lbl_ModuleList                    = (New-Object -TypeName 'System.Windows.Forms.Label')
-    $lbl_ModuleList.Location           = '168,  93'
-    $lbl_ModuleList.Size               = '282, 102'
+    $lbl_ModuleList.Location           = '180,  93'
+    $lbl_ModuleList.Size               = '270, 102'
     If ($($script:settings.Modules) -ne '') { $lbl_ModuleList.Text = $($script:settings.Modules) } Else { $lbl_ModuleList.Text = $($script:ToolLangINI['add-page4']['None']) }
     $ext_Page4.Controls.Add($lbl_ModuleList)
 #endregion
@@ -1253,11 +1256,11 @@ Function Display-MainForm
         Load-ComboBoxIcon -ComboBox $cmo_t1_ToolLang -Items @($ToolLangList | Sort-Object) -SelectedItem $Language -Type 'ToolLang' -Clear
 
         # Set some specific fonts
-        $lbl_t1_Welcome.Font         = $sysFontBold      # Tab 1 Section Header
-        $lbl_t1_MissingFile.Font     = $sysFontItalic    # Hidden by default ("'default-settings.ini' file not found")
-        $lbl_t2_CheckSelection.Font  = $sysFontBold      # Tab 2 Section Header
-        $lbl_t3_ScriptSelection.Font = $sysFontBold      # Tab 3 Section Header
-        $lbl_t4_Complete.Font        = $sysFontBold      # Tab 4 Section Header
+        $lbl_t1_Welcome.Font         = $sysFontBold                # Tab 1 Section Header
+        $lbl_t1_MissingFile.Font     = $sysFontItalic              # Hidden by default ("'default-settings.ini' file not found")
+        $lbl_t2_CheckSelection.Font  = $sysFontBold                # Tab 2 Section Header
+        $lbl_t3_ScriptSelection.Font = $sysFontBold                # Tab 3 Section Header
+        $lbl_t4_Complete.Font        = $sysFontBold                # Tab 4 Section Header
 
         # Set picture and button icons
         $pic_t1_RestoreHelp.Image    = $img_MainForm.Images[15]    # Restore Help
@@ -1274,6 +1277,9 @@ Function Display-MainForm
         $lst_t2_SelectChecks.Groups.Add('PleaseNote', ($script:ToolLangINI['page2']['PleaseNote']))    # Second quotes stops error in 'lst_t2_SelectChecks_SelectedIndexChanged'
         Add-ListViewItem -ListView $lst_t2_SelectChecks -Name '*PN1' -SubItems @('', '')                                                -ImageIndex -1 -Group 'PleaseNote' -Enabled $True
         Add-ListViewItem -ListView $lst_t2_SelectChecks -Name '*PN2' -SubItems @($($script:ToolLangINI['page2']['SelectLocation']), '') -ImageIndex -1 -Group 'PleaseNote' -Enabled $True
+
+        # Realign and center everything.!
+        $MainFORM_Resize.Invoke()
     }
 
     $MainFORM_FormClosing = [System.Windows.Forms.FormClosingEventHandler] {
@@ -1321,46 +1327,45 @@ Function Display-MainForm
     }
 
     $MainFORM_Resize = {
-        # Tab 1
-        $btn_t1_Search.Left       = ($tab_Page1.Width        - $btn_t1_Search.Width)       / 2
-        $btn_t1_Import.Left       = ($tab_Page1.Width        - $btn_t1_Import.Width)       / 2
-        $cmo_t1_Language.Left     = ($tab_Page1.Width        - $cmo_t1_Language.Width)     / 2
-        $cmo_t1_SettingsFile.Left = ($tab_Page1.Width        - $cmo_t1_SettingsFile.Width) / 2
-        $lbl_t1_Language.Left     = ($btn_t1_Search.Left     - $lbl_t1_Language.Width)     - 6
-        $lbl_t1_SettingsFile.Left = ($btn_t1_Search.Left     - $lbl_t1_SettingsFile.Width) - 6
-        $lbl_t1_MissingFile.Left  = ($btn_t1_Search.Left     + $btn_t1_Search.Width)       + 6
-        $lnk_t1_Language.Left     = ($btn_t1_Search.Left     + $btn_t1_Search.Width)       + 6
-        $btn_t1_RestoreINI.Left   = ($MainFORM.Width         - $btn_t1_RestoreINI.Width)   / 2
-        $pic_t1_RestoreHelp.Left  = ($btn_t1_RestoreINI.Left + $btn_t1_RestoreINI.Width)   + 6
+        # Tab 1 - Button/Label/Dropdown cluster in middle
+        $btn_t1_Search.Left         = ($tab_Page1.Width        -  $btn_t1_Search.Width)       / 2
+        $btn_t1_Import.Left         = ($tab_Page1.Width        -  $btn_t1_Import.Width)       / 2
+        $cmo_t1_Language.Left       = ($tab_Page1.Width        -  $cmo_t1_Language.Width)     / 2
+        $cmo_t1_SettingsFile.Left   = ($tab_Page1.Width        -  $cmo_t1_SettingsFile.Width) / 2
+        $lbl_t1_Language.Left       = ($btn_t1_Search.Left     -  $lbl_t1_Language.Width)     - 6
+        $lbl_t1_SettingsFile.Left   = ($btn_t1_Search.Left     -  $lbl_t1_SettingsFile.Width) - 6
+        $lbl_t1_MissingFile.Left    = ($btn_t1_Search.Left     +  $btn_t1_Search.Width)       + 6
+        $lnk_t1_Language.Left       = ($btn_t1_Search.Left     +  $btn_t1_Search.Width)       + 6
+        $btn_t1_RestoreINI.Left     = ($MainFORM.Width         -  $btn_t1_RestoreINI.Width)   / 2
+        $pic_t1_RestoreHelp.Left    = ($btn_t1_RestoreINI.Left +  $btn_t1_RestoreINI.Width)   + 6
 
-        # Tab 2
+        # Tab 2 - Column Width
         $lst_t2_SelectChecks.Columns[1].Width = ($lst_t2_SelectChecks.Width - $lst_t2_SelectChecks.Columns[0].Width - 4 - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth)
 
-        # Tab 3
-        Try {
+        # Tab 3 - Column width and Prev/Next buttons
+        Try {    # Selected tab only, as other listviews are not selectable
             [System.Windows.Forms.ListView]$lvwObject = $tab_t3_Pages.SelectedTab.Controls["lvw_$($tab_t3_Pages.SelectedTab.Text.Trim())"]
             $lvwObject.Columns[1].Width = ($lvwObject.Width - $lvwObject.Columns[0].Width - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth)
-            $lvwObject = $null
         } Catch {}
 
-        [int]$gap = $btn_t3_NextTab.Left - ($btn_t3_PrevTab.Left + $btn_t3_PrevTab.Width)
-        $btn_t3_PrevTab.Left      = (($tab_Page3.Width       - ($btn_t3_PrevTab.Width + $btn_t3_NextTab.Width + $gap)) / 2) + 4
-        $btn_t3_NextTab.Left      = ($btn_t3_PrevTab.Left    + $btn_t3_PrevTab.Width + $gap)
-        $lbl_t3_SectionTabs.Left  = ($btn_t3_PrevTab.Left    - $lbl_t3_SectionTabs.Width)  - 6
+        $gap = $btn_t3_NextTab.Left - ($btn_t3_PrevTab.Left    +  $btn_t3_PrevTab.Width)
+        $btn_t3_PrevTab.Left        = ($tab_Page3.Width        - ($btn_t3_PrevTab.Width       + $btn_t3_NextTab.Width + $gap)) / 2
+        $btn_t3_NextTab.Left        = ($btn_t3_PrevTab.Left    +  $btn_t3_PrevTab.Width       + $gap)
+        $lbl_t3_SectionTabs.Left    = ($btn_t3_PrevTab.Left    -  $lbl_t3_SectionTabs.Width)  - 6
 
-        # Tab 4
-        $btn_t4_Save.Left         = ($tab_Page4.Width        - $btn_t4_Save.Width)         / 2
-        $btn_t4_Generate.Left     = ($tab_Page4.Width        - $btn_t4_Generate.Width)     / 2
-        $txt_t4_ShortCode.Left    = ($tab_Page4.Width        - $txt_t4_ShortCode.Width)    / 2
-        $txt_t4_SC_Outer.Left     = ($tab_Page4.Width        - $txt_t4_SC_Outer.Width)     / 2
-        $txt_t4_ReportTitle.Left  = ($tab_Page4.Width        - $txt_t4_ReportTitle.Width)  / 2
-        $txt_t4_RT_Outer.Left     = ($tab_Page4.Width        - $txt_t4_RT_Outer.Width)     / 2
-        $lbl_t4_ShortName.Left    = ($btn_t4_Save.Left       - $lbl_t4_ShortName.Width)    - 6
-        $lbl_t4_ReportTitle.Left  = ($btn_t4_Save.Left       - $lbl_t4_ReportTitle.Width)  - 6
-        $lbl_t4_CodeEg.Left       = ($btn_t4_Save.Left       + $btn_t4_Save.Width)         + 6
-        $lbl_t4_QAReport.Left     = ($btn_t4_Save.Left       + $btn_t4_Save.Width)         + 6
-        $chk_t4_GenerateMini.Left = ($btn_t4_Save.Left       + $btn_t4_Save.Width)         + 6
-        $btn_t4_Additional.Left   = ($MainFORM.Width         - $btn_t4_Additional.Width)   / 2
+        # Tab 4 - Button/Label cluster in middle
+        $btn_t4_Save.Left           = ($tab_Page4.Width        -  $btn_t4_Save.Width)         / 2
+        $btn_t4_Generate.Left       = ($tab_Page4.Width        -  $btn_t4_Generate.Width)     / 2
+        $txt_t4_ShortCode.Left      = ($tab_Page4.Width        -  $txt_t4_ShortCode.Width)    / 2
+        $txt_t4_SC_Outer.Left       = ($tab_Page4.Width        -  $txt_t4_SC_Outer.Width)     / 2
+        $txt_t4_ReportTitle.Left    = ($tab_Page4.Width        -  $txt_t4_ReportTitle.Width)  / 2
+        $txt_t4_RT_Outer.Left       = ($tab_Page4.Width        -  $txt_t4_RT_Outer.Width)     / 2
+        $lbl_t4_ShortName.Left      = ($btn_t4_Save.Left       -  $lbl_t4_ShortName.Width)    - 6
+        $lbl_t4_ReportTitle.Left    = ($btn_t4_Save.Left       -  $lbl_t4_ReportTitle.Width)  - 6
+        $lbl_t4_CodeEg.Left         = ($btn_t4_Save.Left       +  $btn_t4_Save.Width)         + 6
+        $lbl_t4_QAReport.Left       = ($btn_t4_Save.Left       +  $btn_t4_Save.Width)         + 6
+        $chk_t4_GenerateMini.Left   = ($btn_t4_Save.Left       +  $btn_t4_Save.Width)         + 6
+        $btn_t4_Additional.Left     = ($MainFORM.Width         -  $btn_t4_Additional.Width)   / 2
     }
 
     # ###########################################
@@ -2831,7 +2836,7 @@ Function ChangeLanguage
     $lst_t2_SelectChecks_CH_Name.Text   = $($script:ToolLangINI['page2']['Column_Value'])    # Local User Accounts
     $lst_t2_SelectChecks_CH_Desc.Text   = ''                                                 # Description
     $lst_t2_SelectChecks_CH_Code.Width  = 100
-    $lst_t2_SelectChecks_CH_Name.Width  = 366 - ([System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth + 4)
+    $lst_t2_SelectChecks_CH_Name.Width  = 100 - ([System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth + 4)
     $lst_t2_SelectChecks_CH_Desc.Width  =   0
     [void]$lst_t2_SelectChecks.Columns.Add($lst_t2_SelectChecks_CH_Code)
     [void]$lst_t2_SelectChecks.Columns.Add($lst_t2_SelectChecks_CH_Name)
