@@ -48,7 +48,7 @@ Clear-Host
 [void][Reflection.Assembly]::LoadWithPartialName('System.Drawing')
 [void][Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')
 [System.Drawing.Font]$sysFont       = [System.Drawing.SystemFonts]::MessageBoxFont
-[System.Drawing.Font]$sysFontBold   = (New-Object -TypeName 'System.Drawing.Font' ($sysFont.Name, ($sysFont.SizeInPoints + 1), [System.Drawing.FontStyle]::Bold))
+[System.Drawing.Font]$sysFontBold   = (New-Object -TypeName 'System.Drawing.Font' ($sysFont.Name, ($sysFont.SizeInPoints + 1), [System.Drawing.FontStyle]::Bold  ))
 [System.Drawing.Font]$sysFontItalic = (New-Object -TypeName 'System.Drawing.Font' ($sysFont.Name,  $sysFont.SizeInPoints     , [System.Drawing.FontStyle]::Italic))
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
@@ -443,8 +443,8 @@ Function Show-InputForm
             {
                 If ($Control -is [System.Windows.Forms.TextBox])
                 {
-                    If ($floPanel.VerticalScroll.Visible -eq $false) { $Control.Width = 340                                                                    }
-                    Else                                             { $Control.Width = 340 - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth }
+                    If ($floPanel.VerticalScroll.Visible -eq $false) { $Control.Width = 340                        }
+                    Else { $Control.Width = 340 - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth }
                 }
             }
         }
@@ -483,23 +483,22 @@ Function Show-InputForm
         {
             # Add new counter label
             $labelCounter           = (New-Object -TypeName 'System.Windows.Forms.Label')
-            $labelCounter.Size      = ' 21,   20'
+            $labelCounter.Size      = ' 21,   23'
             $labelCounter.Font      = $sysFont
             $labelCounter.Text      = "$($BoxNumber + 1):"
-            $labelCounter.TextAlign = 'BottomRight'
-            $labelCounter.Margin    = '1, 1, 6, 2'
-            $labelCounter.Padding   = '0, 0, 0, 0'
+            $labelCounter.TextAlign = 'MiddleRight'
+            $labelCounter.Margin    = '1, 1, 6, 2'    # Using Margin as we are relying on
+            $labelCounter.Padding   = '0, 0, 0, 0'    # the flow panel to position controls: Left,Top,Right,Bottom
             $floPanel.Controls.Add($labelCounter)
 
             # Add new text box and select it for focus
             $textBox                = (New-Object -TypeName 'System.Windows.Forms.TextBox')
-            $textBox.Size           = '340, 20'
+            $textBox.Size           = '340, 23'
             $textBox.Font           = $sysFont
             $textBox.Name           = "textBox$BoxNumber"
             $textBox.Text           = $Value.Trim()
             $textBox.Margin         = '1, 1, 0, 2'
             $textBox.Padding        = '0, 0, 0, 0'
-
             $floPanel.Controls.Add($textBox)
             $floPanel.Controls["textbox$BoxNumber"].Select()
             $frm_Input_Resize.Invoke()
@@ -508,12 +507,12 @@ Function Show-InputForm
         {
             # Add new check box
             $chkBox                 = (New-Object -TypeName 'System.Windows.Forms.CheckBox')
-            $chkBox.Size            = "$(370 - 2 - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth), 20"
+            $chkBox.Size            = "$(370 - 2 - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth), 23"
             $chkBox.Font            = $sysFont
             $chkBox.Name            = "chkBox$BoxNumber"
             $chkBox.Text            = $Value + $ItemTip
             $chkBox.TextAlign       = 'MiddleLeft'
-            $chkBox.Margin          = '1, 1, 0, 5'
+            $chkBox.Margin          = '1, 1, 0, 2'
             $chkBox.Padding         = '0, 0, 0, 0'
             $floPanel.Controls.Add($chkBox)
             $floPanel.Controls["chkbox$BoxNumber"].Select()
@@ -615,11 +614,12 @@ Function Show-InputForm
 #region Input Form Controls
     [System.Windows.Forms.Application]::EnableVisualStyles()
     $frm_Input                      = (New-Object -TypeName 'System.Windows.Forms.Form')
-    $frm_Input.FormBorderStyle      = 'SizableToolWindow'
-    $frm_Input.Text                 = $Title
+    $frm_Input.FormBorderStyle      = 'Sizable'
+    $frm_Input.Text                 = " $Title"
     $frm_Input.MaximizeBox          = $False
     $frm_Input.MinimizeBox          = $False
-    $frm_Input.ControlBox           = $False
+    $frm_Input.ControlBox           = $True
+    $frm_Input.ShowIcon             = $False
     $frm_Input.ShowInTaskbar        = $False
     $frm_Input.AutoScaleDimensions  = '6, 13'
     $frm_Input.AutoScaleMode        = 'None'
@@ -636,12 +636,11 @@ Function Show-InputForm
     $lbl_Description.Text           = $($Description.Trim())
     $frm_Input.Controls.Add($lbl_Description)
 
-    If ($Validation -ne 'None')
+    If (($Validation -ne 'None') -and (($Type -eq 'Simple') -or ($Type -eq 'List')))
     {
         $lbl_Validation             = (New-Object -TypeName 'System.Windows.Forms.Label')
         $lbl_Validation.Location    = '212,  60'
         $lbl_Validation.Size        = '170,  15'
-        $lbl_Validation.Font        = $sysFont
         $lbl_Validation.Text        = "$($script:ToolLangINI['input']['Validation']) $($script:ToolLangINI['input'][$Validation])"
         $lbl_Validation.TextAlign   = 'BottomRight'
         $frm_Input.Controls.Add($lbl_Validation)
@@ -732,7 +731,7 @@ Function Show-InputForm
             If ($InputDescription -ne '') { For ($x=0;$x-lt$InputList.Count;$x++) { ForEach ($iDec In $InputDescription.Split('|')) { If ($iDec.StartsWith($InputList[$x] + ': ') -eq $true) { $InputList[$x] = $iDec } } } }
 
             $comboBox               = (New-Object -TypeName 'System.Windows.Forms.ComboBox')
-            $comboBox.Size          = '370,  21'
+            $comboBox.Size          = '370,  23'
             $comboBox.Font          = $sysFont
             $comboBox.DropDownStyle = 'DropDownList'
             $comboBox.Margin        = '1, 1, 1, 1'
@@ -764,7 +763,7 @@ Function Show-InputForm
         'SIMPLE' {
             # Add default text box
             $textBox                = (New-Object -TypeName 'System.Windows.Forms.TextBox')
-            $textBox.Size           = '370,  20'
+            $textBox.Size           = '370,  23'
             $textBox.Margin         = '1, 1, 1, 1'
             $textBox.Padding        = '0, 0, 0, 0'
             $textBox.Font           = $sysFont
@@ -781,6 +780,7 @@ Function Show-InputForm
 #region Show Form And Return Value
     ForEach ($control In $frm_Input.Controls) { $control.Font = $sysFont; Try { $control.FlatStyle = 'Standard' } Catch {} }
     ForEach ($control In $floPanel.Controls)  { $control.Font = $sysFont; Try { $control.FlatStyle = 'Standard' } Catch {} }
+    If ([string]::IsNullOrEmpty($lbl_Validation) -eq $false) { $lbl_Validation.Font = $sysFontItalic }
     $result = $frm_Input.ShowDialog($MainForm)
 
     If ($result -eq [System.Windows.Forms.DialogResult]::OK)
