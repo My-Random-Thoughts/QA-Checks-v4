@@ -1,3 +1,6 @@
+### 2018-02-28
+- GUI changes to the input form.  It's now sizable for the list and checkbox views.
+
 ### 2018-02-21
 - It was easier than I thought to convert from COM- to TOL-.  Your settings files will be automatically converted if you use the QASCT.  If you use the compiler manually, it will read in both the new and old versions.
 
