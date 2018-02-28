@@ -9,7 +9,7 @@
         IgnoreTheseRoles = @('')
 
     DEFAULT-STATE:
-        Enabled
+        Disabled
 
     RESULTS:
         PASS:
