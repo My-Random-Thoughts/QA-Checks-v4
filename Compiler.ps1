@@ -193,7 +193,16 @@ If ($Silent -eq $false)
     Write-Header -Message 'Compiler'
 }
 
-If ($Host.Name -eq 'Windows PowerShell ISE Host') { $Settings = 'default-settings' }
+If ($Host.Name -eq 'Windows PowerShell ISE Host')
+{
+    Write-Host2 '  PLEASE NOTE:'                                                                            -ForegroundColor Yellow
+    Write-Host2 '   Running this script in the ISE will not allow you to choose which configuration file to' -ForegroundColor Yellow
+    Write-Host2 '   use due to limitations with the menu system. The default-settings will be used instead.' -ForegroundColor Yellow
+    Write-Host2 '   In order to select a particular setting, please run this script via a console window.'   -ForegroundColor Yellow
+    Write-Host2 ''
+    $Settings = 'default-settings'
+}
+
 If ([string]::IsNullOrEmpty($Settings) -eq $True)
 {
     Try {
@@ -208,7 +217,7 @@ If ([string]::IsNullOrEmpty($Settings) -eq $True)
         }
         Else
         {
-            Write-host2 "  Using only available configuration file`n" -ForegroundColor Yellow
+            Write-Host2 "  Using only available configuration file`n" -ForegroundColor Yellow
             [string]$Settings = ((Get-ChildItem -Path "$path\settings" -Filter '*.ini').BaseName | Sort-Object)
         }
     }
