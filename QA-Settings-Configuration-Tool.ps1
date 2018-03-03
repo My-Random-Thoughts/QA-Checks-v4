@@ -780,7 +780,7 @@ Function Show-InputForm
 #region Show Form And Return Value
     ForEach ($control In $frm_Input.Controls) { $control.Font = $sysFont; Try { $control.FlatStyle = 'Standard' } Catch {} }
     ForEach ($control In $floPanel.Controls)  { $control.Font = $sysFont; Try { $control.FlatStyle = 'Standard' } Catch {} }
-    If ([string]::IsNullOrEmpty($lbl_Validation) -eq $false) { $lbl_Validation.Font = $sysFontItalic }
+    If (($Validation -ne 'None') -and (($Type -eq 'Simple') -or ($Type -eq 'List'))) { $lbl_Validation.Font = $sysFontItalic }
     $result = $frm_Input.ShowDialog($MainForm)
 
     If ($result -eq [System.Windows.Forms.DialogResult]::OK)
