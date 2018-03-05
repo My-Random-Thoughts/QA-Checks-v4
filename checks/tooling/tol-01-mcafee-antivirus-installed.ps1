@@ -1,4 +1,4 @@
-﻿<#
+<#
     DESCRIPTION: 
         Check that McAfee anti-virus is installed and virus definitions are up to date.
 
@@ -67,11 +67,18 @@ Function tol-01-mcafee-antivirus-installed
                 $result.data    = ($($script:lang['dt02']) -f $verCheck.Version, $script:chkValues['ProductVersion'])
             }
 
-            # Check DAT Update date, and Access Protection is installed and enabled
             [datetime]$dtVal = '01/01/1901'
-                      $dtVal = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\McAfee\AvEngine'                                              -Name  'AVDatDate'                 -ErrorAction SilentlyContinue).'AVDatDate'
-            [psobject]$apVal = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\McAfee\SystemCore\VSCore\On Access Scanner\BehaviourBlocking' -Name ('APEnabled', 'APInstalled') -ErrorAction SilentlyContinue)
+            # Check DAT Update date, and various other settings to determine the version of AV
             [string]  $msVal = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\Network Associates\ePolicy Orchestrator\Agent'                -Name  'ePOServerList'             -ErrorAction SilentlyContinue).'ePOServerList'
+                Try { $dtVal = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\McAfee\AvEngine'                                              -Name  'AVDatDate'                 -ErrorAction SilentlyContinue).'AVDatDate' } Catch {}
+            [psobject]$apVal = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\McAfee\SystemCore\VSCore\On Access Scanner\BehaviourBlocking' -Name ('APEnabled', 'APInstalled') -ErrorAction SilentlyContinue)
+            [string]  $amVal = (Get-ChildItem    -Path "$env:CommonProgramFiles\McAfee\Engine\content\amcore\update"                             -Directory                         -ErrorAction SilentlyContinue | Sort-Object | Select-Object -ExpandProperty 'FullName' -Last 1)
+
+            If (([string]::IsNullOrEmpty($apVal) -eq $true) -and ($dtVal -eq '01/01/1901') -and ([string]::IsNullOrEmpty($amVal) -eq $false))
+            {
+                [object]$epVal = (Get-ChildItem -Path 'HKLM:\SOFTWARE\Wow6432Node\McAfee\EndPoint\Modules' -Name -ErrorAction SilentlyContinue)
+                        $dtVal = (Get-ChildItem -Path "$amVal\amupdate.dat" | Select-Object -ExpandProperty 'CreationTime')
+            }
 
             # Check DAT date
             If ($dtVal -ne '01/01/1901')
@@ -96,18 +103,25 @@ Function tol-01-mcafee-antivirus-installed
                 $result.message += $script:lang['f003']
             }
 
-            # Check OAS
-            If ([string]::IsNullOrEmpty($apVal) -eq $false)
+            If ([string]::IsNullOrEmpty($epVal) -eq $false)
             {
-                If ((($apVal.APEnabled) -eq 1) -and (($apVal.APInstalled) -eq 1)) { $result.message += $script:lang['p003'] }
+                $result.message += $script:lang['dt08'] + ' ' + ($epVal -join ', ') + ',#'
             }
             Else
             {
-                $result.result   = $script:lang['Fail']
-                $result.message += $script:lang['f004']
-                If     ($apVal.APEnabled   -ne 1) { $result.data += $script:lang['dt04'] }
-                ElseIf ($apVal.APInstalled -ne 1) { $result.data += $script:lang['dt05'] }
-                Else   {}
+                # Check OAS
+                If ([string]::IsNullOrEmpty($apVal) -eq $false)
+                {
+                    If ((($apVal.APEnabled) -eq 1) -and (($apVal.APInstalled) -eq 1)) { $result.message += $script:lang['p003'] }
+                }
+                Else
+                {
+                    $result.result   = $script:lang['Fail']
+                    $result.message += $script:lang['f004']
+                    If     ($apVal.APEnabled   -ne 1) { $result.data += $script:lang['dt04'] }
+                    ElseIf ($apVal.APInstalled -ne 1) { $result.data += $script:lang['dt05'] }
+                    Else   {}
+                }
             }
 
             # Check EPO access
