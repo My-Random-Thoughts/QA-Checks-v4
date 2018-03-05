@@ -41,6 +41,7 @@ Try
     }
 }
 Catch { }
+If ($Host.Name -eq 'Windows PowerShell ISE Host') { $ws = New-Object -TypeName 'System.Drawing.Size'(135, 9999) }
 [int]$script:screenwidth = ($ws.Width - 2)
 
 ###################################################################################################
@@ -50,13 +51,13 @@ Function DivLine { Write-Host2 ' '.PadRight($script:screenwidth + 1, $E) -Foregr
 Function Write-Host2 ([string]$Message, [consolecolor]$ForegroundColor = 'White', [switch]$NoNewline = $false)
 {
     If ($Silent -eq $false) {
-        Write-Host -Object $Message -NoNewline:$NoNewline -ForegroundColor $ForegroundColor
+        Write-Host -Object $Message -ForegroundColor $ForegroundColor -NoNewline:$NoNewline
     }
 }
 Function Write-Colr ([String[]]$Text, [ConsoleColor[]]$Colour, [Switch]$NoNewline = $false)
 {
-    For ([int]$x = 0; $x -lt $Text.Length; $x++) { Write-Host2 $Text[$x] -Foreground $Colour[$x] -NoNewLine }
-    If ($NoNewline -eq $false) { Write-Host2 '' }
+    For ([int]$y = 0; $y -lt $Text.Length; $y++) { Write-Host2 -Message $Text[$y] -Foreground $Colour[$y] -NoNewLine }
+    If ($NoNewline -eq $false) { Write-Host2 -Message '' }
 }
 Function Write-Header ([string]$Message)
 {
@@ -134,8 +135,8 @@ Function DrawMenu ($CursorStart, [array]$menuItems, [int]$menuPosition, [string]
 Function ShowMenu ([array]$menuItems, [string]$menuTitle)
 {
     [int]$vkeycode = 0
-    [int]$pos = 0
-    $origpos = $host.UI.RawUI.CursorPosition
+    [int]$pos      = 0
+         $origpos  = $host.UI.RawUI.CursorPosition
 
     DrawMenu -CursorStart $origpos -menuItems $menuItems -menuPosition $pos -menuTitle $menuTitle
     Write-Host ''
@@ -158,7 +159,7 @@ Function ShowMenu ([array]$menuItems, [string]$menuTitle)
     }
     Return $($menuItems[$pos])
 }
-Function Write-LangSectionKeys ([string]$Section)
+Function Write-LangSectionKeys ([string]$Section, [int]$Indent)
 {
     Try {
         # Check keys exist (error-checking for new checks)
@@ -179,7 +180,7 @@ Function Write-LangSectionKeys ([string]$Section)
             If ($value -eq ''    ) { $value = "''" }
             If ($key   -eq 'Appl') { $value = ($lngStrings['applyto'][$value.ToString()]) }
             [string]$lang = ("`$script:lang['$key'] = $($value.Trim())")
-            [void]$SectionInsert.AppendLine($lang)
+            [void]$SectionInsert.AppendLine(''.PadRight($Indent) + $lang)
         }
     } Catch {}
     Return $($SectionInsert.ToString())
@@ -195,7 +196,7 @@ If ($Silent -eq $false)
 
 If ($Host.Name -eq 'Windows PowerShell ISE Host')
 {
-    Write-Host2 '  PLEASE NOTE:'                                                                            -ForegroundColor Yellow
+    Write-Host2 '  PLEASE NOTE:'                                                                             -ForegroundColor Yellow
     Write-Host2 '   Running this script in the ISE will not allow you to choose which configuration file to' -ForegroundColor Yellow
     Write-Host2 '   use due to limitations with the menu system. The default-settings will be used instead.' -ForegroundColor Yellow
     Write-Host2 '   In order to select a particular setting, please run this script via a console window.'   -ForegroundColor Yellow
@@ -350,7 +351,7 @@ $clist = $clist.ToString().Trim().Trim(',') + "`n)"
 [void]$qaScript.AppendLine($shared)
 [void]$qaScript.AppendLine(''.PadLeft(190, '#'))
 [void]$qaScript.AppendLine('#region CHECKS')
-Write-Host2 $B -NoNewline -ForegroundColor Cyan                                                    # First CYAN blob for adding the HEADER infomation
+Write-Host2 $B -NoNewline -ForegroundColor Cyan                                                          # First CYAN blob for adding the HEADER infomation
 
 [System.Text.StringBuilder]$qaHelp = ''
 # Add each check into the script
@@ -360,7 +361,7 @@ ForEach ($qa In ($qaChecks | Sort-Object -Property 'Name'))
     If (($Minimal -eq $True) -and (-not $iniSettings["$checkName"]))
     {
         # Skip adding check
-        Write-Host2 $B -NoNewline -ForegroundColor DarkGreen                                       # Each GREEN blob for adding a QA CHECK
+        Write-Host2 $B -NoNewline -ForegroundColor DarkGreen                                             # DARKGREEN blob for skipping a QA CHECK
     }
     Else
     {
@@ -406,8 +407,8 @@ ForEach ($qa In ($qaChecks | Sort-Object -Property 'Name'))
 
         # Add language specific strings to each check
         $checkName = $checkName.TrimEnd('-skip')
-        [void]$qaScript.Append((Write-LangSectionKeys -Section 'common'))
-        [void]$qaScript.Append((Write-LangSectionKeys -Section $checkName))
+        [void]$qaScript.Append((Write-LangSectionKeys -Section 'common'   -Indent 0))
+        [void]$qaScript.Append((Write-LangSectionKeys -Section $checkName -Indent 0))
 
         # Add the check itself
         [void]$qaScript.AppendLine(((Get-Content -Path ($qa.FullName)) -join "`n"))
@@ -419,14 +420,14 @@ ForEach ($qa In ($qaChecks | Sort-Object -Property 'Name'))
             [string]$value = ($lngStrings[$checkName][$key]).Trim("'")
             Switch -Wildcard ($key)
             {
-                'desc' {                                                                 [void]$xmlHelp.Append("<description>$value</description>"); Break }
-                'appl' { $value = ($lngStrings['applyto'][$value.ToString()]).Trim("'"); [void]$xmlHelp.Append("<applies>$value</applies>");         Break }
+                'desc' {                                                                 [void]$xmlHelp.Append("<description>$value</description>"); Break }    # Description
+                'appl' { $value = ($lngStrings['applyto'][$value.ToString()]).Trim("'"); [void]$xmlHelp.Append("<applies>$value</applies>");         Break }    # Applies to
 
-                'p0*'  { $addVal.p += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }    # Collect any result strings
-                'w0*'  { $addVal.w += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }
-                'f0*'  { $addVal.f += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }
-                'm0*'  { $addVal.m += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }
-                'n0*'  { $addVal.n += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }
+                'p0*'  { $addVal.p += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }    # Pass
+                'w0*'  { $addVal.w += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }    # Warning
+                'f0*'  { $addVal.f += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }    # Fail
+                'm0*'  { $addVal.m += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }    # Manual
+                'n0*'  { $addVal.n += ($($lngStrings[$checkName][$key]).ToString().Trim("'").Replace(',#','')) + '!n'; Break }    # N/A
 
                 Default { }    # Ignore everything else
             }
@@ -457,7 +458,7 @@ ForEach ($qa In ($qaChecks | Sort-Object -Property 'Name'))
 
         # Complete this check
         [void]$qaScript.AppendLine('}')
-        Write-Host2 $B -NoNewline -ForegroundColor Green                                           # Each GREEN blob for adding a QA CHECK
+        Write-Host2 $B -NoNewline -ForegroundColor Green                                                 # GREEN blob for adding a QA CHECK
     }
 }
 
@@ -470,20 +471,19 @@ ForEach ($qa In ($qaChecks | Sort-Object -Property 'Name'))
 [void]$qaScript.AppendLine('#endregion')
 
 [void]$qaScript.AppendLine('#region LANGUAGE')
-[void]$qaScript.Append((Write-LangSectionKeys -Section 'engine'       ))
-[void]$qaScript.Append((Write-LangSectionKeys -Section 'common'       ))
-[void]$qaScript.Append((Write-LangSectionKeys -Section 'section'      ))
-[void]$qaScript.Append((Write-LangSectionKeys -Section 'sectionlookup'))
+[void]$qaScript.Append((Write-LangSectionKeys -Section 'engine'        -Indent 0))
+[void]$qaScript.Append((Write-LangSectionKeys -Section 'common'        -Indent 0))
+[void]$qaScript.Append((Write-LangSectionKeys -Section 'section'       -Indent 0))
+[void]$qaScript.Append((Write-LangSectionKeys -Section 'sectionlookup' -Indent 0))
 [void]$qaScript.AppendLine('#endregion')
 [void]$qaScript.AppendLine(''.PadLeft(190, '#'))
-Write-Host2 $B -NoNewline -ForegroundColor Cyan                                                    # Second CYAN blob for adding the HELP and LANGUAGE settings
-
+Write-Host2 $B -NoNewline -ForegroundColor Cyan                                                          # Second CYAN blob for adding the HELP and LANGUAGE settings
 
 # Get the main engine file
 [string]$engine = ((Get-Content ($path + '\engine\QA-Engine.ps1')) -join "`n")
 
 # Insert language specific strings for the internal check
-$engine = $engine.Replace('# LANGUAGE INSERT', (Write-LangSectionKeys -Section 'int00'))
+$engine = $engine.Replace('# LANGUAGE INSERT', (Write-LangSectionKeys -Section 'int00' -Indent 4))
 
 # Make sure we have a value in the settings, if not use the defaults
 If ([string]::IsNullOrEmpty(($iniSettings['settings']['reportCompanyName'])) -eq $True) { ($iniSettings['settings']['reportCompanyName']) =          'Acme' }
@@ -495,17 +495,20 @@ If ([string]::IsNullOrEmpty(($iniSettings['settings']['sessionUseSSL']))     -eq
 If ([string]::IsNullOrEmpty(($iniSettings['settings']['RequiredModules']))   -eq $True) { ($iniSettings['settings']['RequiredModules'])   =              '' }
 
 # Insert script variables
-$engine = $engine.Replace('# COMPILER INSERT', '[string]   $reportCompanyName      = "' + ($iniSettings['settings']['reportCompanyName']) + '"' + "`n# COMPILER INSERT")
-$engine = $engine.Replace('# COMPILER INSERT', '[string]   $script:qaOutput        = "' + ($iniSettings['settings']['outputLocation']   ) + '"' + "`n# COMPILER INSERT")
-$engine = $engine.Replace('# COMPILER INSERT', '[int]      $script:ccTasks         = '  + ($iniSettings['settings']['concurrent']       ) +       "`n# COMPILER INSERT")
-$engine = $engine.Replace('# COMPILER INSERT', '[int]      $script:checkTimeout    = '  + ($iniSettings['settings']['timeout']          ) +       "`n# COMPILER INSERT")
-$engine = $engine.Replace('# COMPILER INSERT', '[int]      $script:sessionPort     = '  + ($iniSettings['settings']['sessionPort']      ) +       "`n# COMPILER INSERT")
-$engine = $engine.Replace('# COMPILER INSERT', '[string]   $script:sessionUseSSL   = "' + ($iniSettings['settings']['sessionUseSSL']    ) + '"' + "`n# COMPILER INSERT")
-$engine = $engine.Replace('# COMPILER INSERT', '[string]   $script:requiredModules = "' + ($iniSettings['settings']['RequiredModules']  ) + '"' + "`n"                 )
+$engine = $engine.Replace('# COMPILER INSERT', @"
+[string]`$reportCompanyName      = '$($iniSettings['settings']['reportCompanyName'])'
+[string]`$script:qaOutput        = '$($iniSettings['settings']['outputLocation']   )'
+[int]   `$script:ccTasks         =  $($iniSettings['settings']['concurrent']       )
+[int]   `$script:checkTimeout    =  $($iniSettings['settings']['timeout']          ) 
+[int]   `$script:sessionPort     =  $($iniSettings['settings']['sessionPort']      ) 
+[string]`$script:sessionUseSSL   = '$($iniSettings['settings']['sessionUseSSL']    )'
+[string]`$script:requiredModules = '$($iniSettings['settings']['RequiredModules']  )'
+"@)
+
 
 [void]$qaScript.Append($engine)
 Out-File -FilePath $outPath -InputObject $qaScript.ToString() -Encoding utf8
-Write-Host2 $B -NoNewline -ForegroundColor Cyan                                                    # Last CYAN blob for finishing the compile
+Write-Host2 $B -NoNewline -ForegroundColor Cyan                                                          # Last CYAN blob for finishing the compile
 Write-Host2 ''
 
 ###################################################################################################
