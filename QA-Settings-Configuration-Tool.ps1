@@ -74,6 +74,13 @@ Function New-IconComboItem { Return (New-Object -TypeName 'PSObject' -Property @
 [System.Collections.ArrayList]$script:IC_AS_Timeout    = @{}    #   Combo Boxes
 [System.Collections.ArrayList]$script:IC_AS_Concurrent = @{}    # /
 
+$Definition = @'
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern bool SendNotifyMessage(IntPtr hWnd, int msg, int wParam, string lParam);
+'@
+$DefFunc = Add-Type -MemberDefinition $Definition -Name 'User32' -Namespace 'Win32' -PassThru
+Function SendMessage([intptr]$ControlHandle, [string]$DisplayString) { Return $DefFunc::SendNotifyMessage($ControlHandle, '&H1501', 1, $DisplayString) }
+
 Function Get-Folder ([string]$Description, [string]$InitialDirectory, [boolean]$ShowNewFolderButton)
 {
     [string]$return = ''
@@ -499,6 +506,11 @@ Function Show-InputForm
             $textBox.Text           = $Value.Trim()
             $textBox.Margin         = '1, 1, 0, 2'
             $textBox.Padding        = '0, 0, 0, 0'
+
+            If (($Validation -ne 'None') -and (($Type -eq 'Simple') -or ($Type -eq 'List'))) {
+                [void](SendMessage -ControlHandle $textBox.Handle -DisplayString $($lbl_Validation.Text))
+            }
+
             $floPanel.Controls.Add($textBox)
             $floPanel.Controls["textbox$BoxNumber"].Select()
             $frm_Input_Resize.Invoke()
@@ -769,6 +781,9 @@ Function Show-InputForm
             $textBox.Font           = $sysFont
             $floPanel.Controls.Add($textBox)
             $textBox.Text           = (($CurrentValue.Trim()) -join "`r`n")
+            If (($Validation -ne 'None') -and (($Type -eq 'Simple') -or ($Type -eq 'List'))) {
+                [void](SendMessage -hWnd $textBox.Handle -msg '&H1501' -wParam 1 -lParam $($lbl_Validation.Text))
+            }
             $textBox.Select()
             Break
         }
@@ -1266,7 +1281,7 @@ Function Display-MainForm
 
         # Set picture and button icons
         $pic_t1_RestoreHelp.Image    = $img_MainForm.Images[13]    # Restore Help
-        $pic_t2_Search.Image         = $img_MainForm.Images[ 7]    # Cancel Search
+        $pic_t2_SearchClear.Image    = $img_MainForm.Images[ 7]    # Cancel Search
         $btn_t2_SelectAll.Image      = $img_MainForm.Images[ 9]    # Select All
         $btn_t2_SelectInv.Image      = $img_MainForm.Images[10]    # Select Invert
         $btn_t2_SelectNone.Image     = $img_MainForm.Images[11]    # Select None
@@ -1660,7 +1675,6 @@ Function Display-MainForm
         $cmo_t1_Language.Enabled               =  $True
         $lnk_t1_Language.Enabled               =  $True
         $cmo_t1_SettingsFile.Enabled           =  $True
-        $lbl_t2_Search.Enabled                 =  $True
         $chk_t2_Search.Enabled                 =  $True
         $txt_t2_Search.Enabled                 =  $True
         $pic_t2_SearchHelp.Visible             =  $True
@@ -1838,7 +1852,7 @@ Function Display-MainForm
 
     $lnk_t2_Description_Click = {
         [string]$link = $lnk_t2_Description.Text.SubString($($lnk_t2_Description.LinkArea.Start), $($lnk_t2_Description.LinkArea.Length))
-        Start-Process -FilePath $link
+        If ([string]::IsNullOrEmpty($link) -eq $False) { Start-Process -FilePath $link }
     }
 
     # Set focus to the exit button if there are no checks listed
@@ -1858,8 +1872,12 @@ Function Display-MainForm
         [void]$lst_t2_SelectChecks.Items.Clear()
 
         [string]$sQuery = ''
-        $pic_t2_Search.Visible = $False
-        If ($txt_t2_Search.Text.Length -gt 1) { $sQuery = $txt_t2_Search.Text; $pic_t2_Search.Visible = $True }
+        $pic_t2_SearchHelp.Visible  = $True
+        $pic_t2_SearchClear.Visible = $False
+        $pic_t2_SearchHelp.BringToFront()
+        $pic_t2_SearchClear.BringToFront()
+
+        If ($txt_t2_Search.Text.Length -gt 1) { $sQuery = $txt_t2_Search.Text; $pic_t2_SearchClear.Visible = $True; $pic_t2_SearchHelp.Visible = $False }
 
         If ($txt_t2_Search.Text.StartsWith('!') -eq $False)
         {
@@ -2342,7 +2360,8 @@ Function ChangeLanguage
     $lst_t2_SelectChecks.Columns[1].Text  = ($script:ToolLangINI['page2']['Column_Name'])
     $lbl_t2_Select.Text                   = ($script:ToolLangINI['page2']['Select'])
     $btn_t2_SetValues.Text                = ($script:ToolLangINI['page2']['SetValues'])
-    $lbl_t2_Search.Text                   = ($script:ToolLangINI['page2']['SearchName'])
+    SendMessage -ControlHandle $txt_t2_Search.Handle -DisplayString ($script:ToolLangINI['page2']['SearchName'])
+
     $chk_t2_Search.Text                   = ($script:ToolLangINI['page2']['SearchCheck'])
     $lbl_t2_ChangesMade.Text              = ($script:ToolLangINI['page2']['ChangeNote'])
 
@@ -2836,7 +2855,7 @@ Function ChangeLanguage
     $lnk_t2_Description.Anchor          = 'Top, Bottom, Right'
     $lnk_t2_Description.BackColor       = 'Window'
     $lnk_t2_Description.Location        = '475,  36'
-    $lnk_t2_Description.Size            = '277, 418'
+    $lnk_t2_Description.Size            = '277, 430'
     $lnk_t2_Description.Padding         = '3, 3, 3, 3'    # Internal padding
     $lnk_t2_Description.Text            = ''              # Description of the selected check - set via code
     $lnk_t2_Description.TextAlign       = 'TopLeft'
@@ -2844,19 +2863,9 @@ Function ChangeLanguage
     $lnk_t2_Description.Add_Click($lnk_t2_Description_Click)
     $tab_Page2.Controls.Add($lnk_t2_Description)
 
-    $lbl_t2_Search                      = (New-Object -TypeName 'System.Windows.Forms.Label')
-    $lbl_t2_Search.Anchor               = 'Bottom, Right'
-    $lbl_t2_Search.Location             = '478, 457'
-    $lbl_t2_Search.Size                 = '247,  17'
-    $lbl_t2_Search.Text                 = ($script:ToolLangINI['page2']['SearchName'])
-    $lbl_t2_Search.TextAlign            = 'MiddleLeft'
-    $lbl_t2_Search.BackColor            = 'Window'
-    $lbl_t2_Search.Enabled              =  $False
-    $tab_Page2.Controls.Add($lbl_t2_Search)
-
     $pic_t2_SearchHelp                  = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
     $pic_t2_SearchHelp.Anchor           = 'Bottom, Right'
-    $pic_t2_SearchHelp.Location         = '730, 458'
+    $pic_t2_SearchHelp.Location         = '725, 482' #'730, 458'
     $pic_t2_SearchHelp.Size             = ' 16,  16'
     $pic_t2_SearchHelp.Cursor           = 'Hand'
     $pic_t2_SearchHelp.BackColor        = 'Window'
@@ -2864,15 +2873,15 @@ Function ChangeLanguage
     $pic_t2_SearchHelp.Add_Click($pic_t2_SearchHelp_Click)
     $tab_Page2.Controls.Add($pic_t2_SearchHelp)
 
-    $pic_t2_Search                      = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
-    $pic_t2_Search.Anchor               = 'Bottom, Right'
-    $pic_t2_Search.Location             = '725, 482'
-    $pic_t2_Search.Size                 = ' 16,  16'
-    $pic_t2_Search.Cursor               = 'Hand'
-    $pic_t2_Search.BackColor            = 'Window'
-    $pic_t2_Search.Visible              = $False
-    $pic_t2_Search.Add_Click({ $txt_t2_Search.Text = '' })
-    $tab_Page2.Controls.Add($pic_t2_Search)
+    $pic_t2_SearchClear                 = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
+    $pic_t2_SearchClear.Anchor          = 'Bottom, Right'
+    $pic_t2_SearchClear.Location        = '725, 482'
+    $pic_t2_SearchClear.Size            = ' 16,  16'
+    $pic_t2_SearchClear.Cursor          = 'Hand'
+    $pic_t2_SearchClear.BackColor       = 'Window'
+    $pic_t2_SearchClear.Visible         = $False
+    $pic_t2_SearchClear.Add_Click({ $txt_t2_Search.Text = '' })
+    $tab_Page2.Controls.Add($pic_t2_SearchClear)
 
     $txt_t2_Search                      = (New-Object -TypeName 'System.Windows.Forms.TextBox')
     $txt_t2_Search.Anchor               = 'Bottom, Right'
@@ -2894,8 +2903,8 @@ Function ChangeLanguage
 
     $chk_t2_Search                      = (New-Object -TypeName 'System.Windows.Forms.CheckBox')
     $chk_t2_Search.Anchor               = 'Bottom, Right'
-    $chk_t2_Search.Location             = '480, 507'
-    $chk_t2_Search.Size                 = '266,  17'
+    $chk_t2_Search.Location             = '483, 507'
+    $chk_t2_Search.Size                 = '263,  17'
     $chk_t2_Search.Text                 = ($script:ToolLangINI['page2']['SearchCheck'])
     $chk_t2_Search.BackColor            = 'Window'
     $chk_t2_Search.Enabled              = $False
