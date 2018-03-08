@@ -58,7 +58,7 @@ Clear-Host
 [string]   $script:SelectedToolLang = ''
 [string]   $script:regExMatch       = '((?:.|\s)+?)(?:(?:[A-Z\- ]+:\n)|(?:#>))'    # Used for all RegEx search matching used in the check comments
 [string]   $script:toolName         = 'QA Settings Configuration Tool'             # QASCT Name
-[string]   $script:toolVersion      = 'v4.18.0226'                                 # QASCT Version (v4.yy.mmdd)
+[string]   $script:toolVersion      = 'v4.18.0308'                                 # QASCT Version (v4.yy.mmdd)
 
 ###################################################################################################
 ##                                                                                               ##
@@ -74,12 +74,13 @@ Function New-IconComboItem { Return (New-Object -TypeName 'PSObject' -Property @
 [System.Collections.ArrayList]$script:IC_AS_Timeout    = @{}    #   Combo Boxes
 [System.Collections.ArrayList]$script:IC_AS_Concurrent = @{}    # /
 
+# Enable Cue Banner text to be applied to textbox controls
 $Definition = @'
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     public static extern bool SendNotifyMessage(IntPtr hWnd, int msg, int wParam, string lParam);
 '@
 $DefFunc = Add-Type -MemberDefinition $Definition -Name 'User32' -Namespace 'Win32' -PassThru
-Function SendMessage([intptr]$ControlHandle, [string]$DisplayString) { Return $DefFunc::SendNotifyMessage($ControlHandle, '&H1501', 1, $DisplayString) }
+Function SendMessage([intptr]$ControlHandle, [string]$DisplayString) { Return $DefFunc::SendNotifyMessage($ControlHandle, '&H1501', 0, $DisplayString) }
 
 Function Get-Folder ([string]$Description, [string]$InitialDirectory, [boolean]$ShowNewFolderButton)
 {
@@ -1025,8 +1026,8 @@ Function Show-AdditionalOptions ()
     $ext_Page2.Controls.Add($lbl_Location)
 
     $txt_Location                      = (New-Object -TypeName 'System.Windows.Forms.Textbox')
-    $txt_Location.Location             = '171,  65'    # +3, +5
-    $txt_Location.Size                 = '276,  22'    # -6, -5
+    $txt_Location.Location             = '174,  65'    # +6, +5
+    $txt_Location.Size                 = '273,  22'    # -9, -5
     $txt_Location.TextAlign            = 'Left'
     $txt_Location.BorderStyle          = 'None'
     If ($($script:settings.OutputLocation) -ne '') { $txt_Location.Text = $($script:settings.OutputLocation) } Else { $txt_Location.Text = 'C:\QA\Results\' }
@@ -1357,12 +1358,18 @@ Function Display-MainForm
         $pic_t1_RestoreHelp.Left    = ($btn_t1_RestoreINI.Left +  $btn_t1_RestoreINI.Width)   + 6
 
         # Tab 2 - Column Width
-        $lst_t2_SelectChecks.Columns[1].Width = ($lst_t2_SelectChecks.Width - $lst_t2_SelectChecks.Columns[0].Width - 4 - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth)
+        $lst_t2_SelectChecks.Columns[0].Width = 100
+        $lst_t2_SelectChecks.Columns[1].Width = ($lst_t2_SelectChecks.Width - 100 - 4 - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth)
+        $lst_t2_SelectChecks.Columns[2].Width = 0
 
-        # Tab 3 - Column width and Prev/Next buttons
-        Try {    # Selected tab only, as other listviews are not selectable
+        # Tab 3 - Column width and Prev/Next buttons - Selected tab only, as other listviews are not selectable
+        Try {
             [System.Windows.Forms.ListView]$lvwObject = $tab_t3_Pages.SelectedTab.Controls["lvw_$($tab_t3_Pages.SelectedTab.Text.Trim())"]
-            $lvwObject.Columns[1].Width = ($lvwObject.Width - $lvwObject.Columns[0].Width - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth)
+            $lvwObject.Columns[0].Width = 225
+            $lvwObject.Columns[1].Width = ($lvwObject.Width - 225 - [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth)
+            $lvwObject.Columns[2].Width = 0
+            $lvwObject.Columns[3].Width = 0
+            $lvwObject.Columns[4].Width = 0
         } Catch {}
 
         $gap = $btn_t3_NextTab.Left - ($btn_t3_PrevTab.Left    +  $btn_t3_PrevTab.Width)
