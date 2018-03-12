@@ -953,7 +953,7 @@ Function Show-AdditionalOptions ()
     $frm_Additional.CancelButton       = $btn_Cancel
     $frm_Additional.Controls.Add($btn_Cancel)
 #endregion
-#region OPTIONS
+#region TAP PAGES
   # PAGE 1
     $lbl_Title1                        = (New-Object -TypeName 'System.Windows.Forms.Label')
     $lbl_Title1.Location               = ' 12,  12'
@@ -1026,8 +1026,8 @@ Function Show-AdditionalOptions ()
     $ext_Page2.Controls.Add($lbl_Location)
 
     $txt_Location                      = (New-Object -TypeName 'System.Windows.Forms.Textbox')
-    $txt_Location.Location             = '174,  65'    # +6, +5
-    $txt_Location.Size                 = '273,  22'    # -9, -5
+    $txt_Location.Location             = '174,  65'    # + 6, +5
+    $txt_Location.Size                 = '270,  22'    # -12, -5
     $txt_Location.TextAlign            = 'Left'
     $txt_Location.BorderStyle          = 'None'
     If ($($script:settings.OutputLocation) -ne '') { $txt_Location.Text = $($script:settings.OutputLocation) } Else { $txt_Location.Text = 'C:\QA\Results\' }
@@ -1307,20 +1307,29 @@ Function Display-MainForm
 
     $Form_Cleanup_FormClosed = {
         $tab_Pages.Remove_SelectedIndexChanged($tab_Pages_SelectedIndexChanged)
+        $tim_CompleteButton.Remove_Tick($tim_CompleteButton_Tick)
         $btn_t1_Search.Remove_Click($btn_t1_Search_Click)
+        $lnk_t1_Language.Remove_Click($lnk_t1_Language_Click)
         $btn_t1_Import.Remove_Click($btn_t1_Import_Click)
         $btn_t1_RestoreINI.Remove_Click($btn_t1_RestoreINI_Click)
-        $btn_t2_SetValues.Remove_Click($btn_t2_SetValues_Click)
+        $pic_t1_RestoreHelp.Remove_Click($pic_t1_RestoreHelp_Click)
         $lst_t2_SelectChecks.Remove_Enter($lst_t2_SelectChecks_Enter)
         $lst_t2_SelectChecks.Remove_ItemChecked($lst_t2_SelectChecks_ItemChecked)
         $lst_t2_SelectChecks.Remove_SelectedIndexChanged($lst_t2_SelectChecks_SelectedIndexChanged)
+        $lnk_t2_Description.Remove_LinkClicked($lnk_t2_Description_LinkClicked)
+        $pic_t2_SearchHelp.Remove_Click($pic_t2_SearchHelp_Click)
+        $txt_t2_Search.Remove_TextChanged($txt_t2_Search_TextChanged)
+        $chk_t2_Search.Remove_CheckedChanged($chk_t2_Search_CheckedChanged)
+        $btn_t2_SetValues.Remove_Click($btn_t2_SetValues_Click)
+        $tab_t3_Pages.Remove_SelectedIndexChanged($tab_t3_Pages_SelectedIndexChanged)
         $btn_t3_PrevTab.Remove_Click($btn_t3_PrevTab_Click)
         $btn_t3_NextTab.Remove_Click($btn_t3_NextTab_Click)
         $btn_t3_Complete.Remove_Click($btn_t3_Complete_Click)
-        $tab_t3_Pages.Remove_SelectedIndexChanged($tab_t3_Pages_SelectedIndexChanged)
+        $txt_t4_ShortCode.Remove_TextChanged($txt_t4_ShortCode_TextChanged)
         $btn_t4_Save.Remove_Click($btn_t4_Save_Click)
-        $btn_t4_Additional.Remove_Click($btn_t4_Additional_Click)
         $btn_t4_Generate.Remove_Click($btn_t4_Generate_Click)
+        $chk_t4_GenerateMini.Remove_CheckedChanged($txt_t4_ShortCode_TextChanged) 
+        $btn_t4_Additional.Remove_Click($btn_t4_Additional_Click)
 
         Try {
             $sysFont.Dispose()
@@ -1525,10 +1534,7 @@ Function Display-MainForm
         $cmo_t1_Language.Enabled        =  $False
         $lnk_t1_Language.Enabled        =  $False
         $cmo_t1_SettingsFile.Enabled    =  $False
-        $lbl_t1_ScanningScripts.Text    = ''
-        $lbl_t1_ScanningScripts.Visible =  $True
         [void]$script:ListViewCollection.Clear()
-        $lbl_t1_ScanningScripts.Refresh(); [System.Windows.Forms.Application]::DoEvents()
 
         # Load Language, Settings and Help details
         [hashtable]$settingsINI =        (Load-IniFile -Inputfile "$script:scriptLocation\settings\$($script:SelectedSettings.Name).ini")
@@ -1558,12 +1564,9 @@ Function Display-MainForm
         [System.Globalization.TextInfo]$TextInfo = (Get-Culture).TextInfo    # Used for 'ToTitleCase' below
         ForEach ($folder In ($folders | Sort-Object -Property 'Name'))
         {
-            [string]$folderName = ($folder.Name.ToLower())
-            [string]$folderPath = ($folder.FullName.ToLower().Substring("$script:scriptLocation\checks\".Length))
-            $lbl_t1_ScanningScripts.Text = $script:languageINI['Section'][$($folderName.ToUpper())]
-            $lbl_t1_ScanningScripts.Refresh(); [System.Windows.Forms.Application]::DoEvents()
-
-            [object[]]$scripts = (Get-ChildItem -Path "$script:scriptLocation\checks\$folderPath" -Filter '???-??-*.ps1' | Select-Object -ExpandProperty 'Name' | Sort-Object -Property 'Name' )
+            [string]  $folderName = ($folder.Name.ToLower())
+            [string]  $folderPath = ($folder.FullName.ToLower().Substring("$script:scriptLocation\checks\".Length))
+            [object[]]$scripts    = (Get-ChildItem -Path "$script:scriptLocation\checks\$folderPath" -Filter '???-??-*.ps1' | Select-Object -ExpandProperty 'Name' | Sort-Object -Property 'Name' )
 
             # Only run if the folder contains checks
             If ([string]::IsNullOrEmpty($scripts) -eq $False)
@@ -1596,7 +1599,7 @@ Function Display-MainForm
                         $regExD = [regex]::Match($getContent, "DESCRIPTION:$script:regExMatch")
 
                         [string]$checkDesc = "Applies To: $($regExA.Groups[1].Value.Trim())!n"
-                        ($regExD.Groups[1].Value.Trim().Split("`n")) | ForEach-Object -Process { $checkDesc += $_.Trim() + '  ' }
+                        ($regExD.Groups[1].Value.Trim().Split("`n")) | ForEach-Object -Process { $checkDesc += $_.Trim() + '!n' }
                         $checkDescription = "$checkAppl`n`n$checkDesc".Trim()
                     }
 
@@ -1615,7 +1618,7 @@ Function Display-MainForm
                         # Load default "ENABLED/SKIPPED" value from the check itself
                         If ($getContent -eq '') { $getContent = ((Get-Content -Path ("$script:scriptLocation\checks\$folderPath\$script") -TotalCount 50) -join "`n") }
                         $regExE = [regex]::Match($getContent, "DEFAULT-STATE:$script:regExMatch")
-                        If ($regExE.Groups[1].Value.Trim() -eq 'Enabled') { $lst_t2_SelectChecks.Items["$checkCode"].Checked = $True }
+                        If ($regExE.Groups[1].Value.Trim() -eq 'Enabled') { $newItem.Checked = $True }
                     }
 
                     # Add the item to the collection
@@ -1698,7 +1701,6 @@ Function Display-MainForm
         Update-NavButtons
         $script:UpdateSelectedCount            =  $True
         $script:ShowChangesMade                =  $False
-        $lbl_t1_ScanningScripts.Visible        =  $False
         $MainFORM.Cursor                       = 'Default'
     }
 
@@ -1857,7 +1859,7 @@ Function Display-MainForm
         }
     }
 
-    $lnk_t2_Description_Click = {
+    $lnk_t2_Description_LinkClicked = {
         [string]$link = $lnk_t2_Description.Text.SubString($($lnk_t2_Description.LinkArea.Start), $($lnk_t2_Description.LinkArea.Length))
         If ([string]::IsNullOrEmpty($link) -eq $False) { Start-Process -FilePath $link }
     }
@@ -2020,7 +2022,7 @@ Function Display-MainForm
 
                     # Get the help text for each check setting from the language specific INI file
                     Try { $lngDesc = ($script:languageINI[$($listItem.Text)][$($item.Trim())].ToString().Trim()) }
-                    Catch { If ($HackCheck.Contains($listItem.Text) -eq $False) { Write-Warning "btn_t2_SetValues_Click: Missing Text: $($listitem.Text) : $($item)" } }
+                    Catch { If ($HackCheck.Contains($listItem.Text) -eq $False) { Write-Warning "Missing '$($script:SelectedLanguage.Name)' translation text: [$($listitem.Text)] $($item)" } }
 
                     # No details in help file yet, get from check itself (english only)
                     $regExI = [regex]::Match($getContent, "REQUIRED-INPUTS:$script:regExMatch")
@@ -2482,7 +2484,7 @@ Function ChangeLanguage
     $tab_Pages.SelectedIndex            = 0
     $tab_Pages.Add_SelectedIndexChanged($tab_Pages_SelectedIndexChanged)
     $MainFORM.Controls.Add($tab_Pages)
-
+    
     $tab_Page1                          = (New-Object -TypeName 'System.Windows.Forms.TabPage')
     $tab_Page1.Anchor                   = 'Top, Bottom, Left, Right'
     $tab_Page1.BackColor                = 'Control'
@@ -2768,15 +2770,6 @@ Function ChangeLanguage
     $btn_t1_Import.Add_Click($btn_t1_Import_Click)
     $tab_Page1.Controls.Add($btn_t1_Import)
 
-    $lbl_t1_ScanningScripts             = (New-Object -TypeName 'System.Windows.Forms.Label')
-    $lbl_t1_ScanningScripts.Anchor      = 'Bottom, Left'
-    $lbl_t1_ScanningScripts.Location    = '  9, 547'
-    $lbl_t1_ScanningScripts.Size        = '744,  20'
-    $lbl_t1_ScanningScripts.Text        = ''
-    $lbl_t1_ScanningScripts.TextAlign   = 'BottomLeft'
-    $lbl_t1_ScanningScripts.Visible     = $False
-    $tab_Page1.Controls.Add($lbl_t1_ScanningScripts)
-
     $btn_t1_RestoreINI                  = (New-Object -TypeName 'System.Windows.Forms.Button')
     $btn_t1_RestoreINI.Anchor           = 'Bottom, Left'
     $btn_t1_RestoreINI.Location         = '316, 635'
@@ -2867,7 +2860,7 @@ Function ChangeLanguage
     $lnk_t2_Description.Text            = ''              # Description of the selected check - set via code
     $lnk_t2_Description.TextAlign       = 'TopLeft'
     $lnk_t2_Description.LinkArea        = (New-Object -TypeName 'System.Windows.Forms.LinkArea'(0, 0))
-    $lnk_t2_Description.Add_Click($lnk_t2_Description_Click)
+    $lnk_t2_Description.Add_LinkClicked($lnk_t2_Description_LinkClicked)
     $tab_Page2.Controls.Add($lnk_t2_Description)
 
     $pic_t2_SearchHelp                  = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
@@ -2961,12 +2954,21 @@ Function ChangeLanguage
     $btn_t2_SelectNone.Add_Click({ btn_t2_SelectButtons -SourceButton 'SelectNone' })
     $tab_Page2.Controls.Add($btn_t2_SelectNone)
 
-    $pic_t2_SelectSep                   = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
-    $pic_t2_SelectSep.Anchor            = 'Bottom, Right'
-    $pic_t2_SelectSep.Location          = '474, 541'
-    $pic_t2_SelectSep.Size              = '  1,  22'
-    $pic_t2_SelectSep.BorderStyle       = 'FixedSingle'
-    $tab_Page2.Controls.Add($pic_t2_SelectSep)
+    $pic_t2_SelectSepB                   = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
+    $pic_t2_SelectSepB.Anchor            = 'Bottom, Right'
+    $pic_t2_SelectSepB.Location          = '474, 541'
+    $pic_t2_SelectSepB.Size              = '  1,  22'
+    $pic_t2_SelectSepB.BackColor         = [System.Drawing.SystemColors]::ButtonShadow
+    $pic_t2_SelectSepB.BorderStyle       = 'None'
+    $tab_Page2.Controls.Add($pic_t2_SelectSepB)
+
+    $pic_t2_SelectSepW                   = (New-Object -TypeName 'System.Windows.Forms.PictureBox')
+    $pic_t2_SelectSepW.Anchor            = 'Bottom, Right'
+    $pic_t2_SelectSepW.Location          = '475, 541'
+    $pic_t2_SelectSepW.Size              = '  2,  22'
+    $pic_t2_SelectSepW.BackColor         = [System.Drawing.SystemColors]::ButtonHighlight
+    $pic_t2_SelectSepW.BorderStyle       = 'None'
+    $tab_Page2.Controls.Add($pic_t2_SelectSepW)
 
     $btn_t2_SelectReset                 = (New-Object -TypeName 'System.Windows.Forms.Button')
     $btn_t2_SelectReset.Anchor          = 'Bottom, Right'
@@ -3103,8 +3105,8 @@ Function ChangeLanguage
 
     $txt_t4_ShortCode                   = (New-Object -TypeName 'System.Windows.Forms.TextBox')
     $txt_t4_ShortCode.Anchor            = 'Bottom, Left'
-    $txt_t4_ShortCode.Location          = '284, 330'    # +3, +5
-    $txt_t4_ShortCode.Size              = '194,  22'    # -6, -5
+    $txt_t4_ShortCode.Location          = '287, 330'    # + 6, +5
+    $txt_t4_ShortCode.Size              = '188,  22'    # -12, -5
     $txt_t4_ShortCode.TextAlign         = 'Center'
     $txt_t4_ShortCode.BorderStyle       = 'None'
     $txt_t4_ShortCode.MaxLength         = '12'
@@ -3142,8 +3144,8 @@ Function ChangeLanguage
 
     $txt_t4_ReportTitle                 = (New-Object -TypeName 'System.Windows.Forms.TextBox')
     $txt_t4_ReportTitle.Anchor          = 'Bottom, Left'
-    $txt_t4_ReportTitle.Location        = '284, 372'    # +3, +5
-    $txt_t4_ReportTitle.Size            = '194,  22'    # -6, -5
+    $txt_t4_ReportTitle.Location        = '287, 372'    # + 6, +5
+    $txt_t4_ReportTitle.Size            = '188,  22'    # -12, -5
     $txt_t4_ReportTitle.TextAlign       = 'Center'
     $txt_t4_ReportTitle.BorderStyle     = 'None'
     $txt_t4_ReportTitle.MaxLength       = '16'
@@ -3215,7 +3217,7 @@ Function ChangeLanguage
 [boolean] $script:UpdateSelectedCount = $False    # Speeds up processing of All/Inv/None buttons
 [string]  $script:saveFile            = ''
 [int]     $script:CompleteTick        = 0
-[psobject]$script:settings            = (New-Object -TypeName PSObject -Property @{
+[psobject]$script:settings            = (New-Object -TypeName 'PSObject' -Property @{
                                             Timeout        =  60;
                                             Concurrent     =  5;
                                             OutputLocation = 'C:\QA\Results\';
