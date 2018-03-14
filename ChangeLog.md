@@ -1,3 +1,6 @@
+### 2018-03-12
+- `SEC-19` : Added new check for finding any unquoted service paths
+
 ### 2018-02-28
 - GUI changes to the input form.  It's now sizable for the list and checkbox views.
 
