@@ -50,7 +50,7 @@ Function sec-11-iis-default-page
             {
                 If ($gWinFe2.InstallState -eq 'Installed')
                 {
-                    [System.Collections.ArrayList]$gCIMi = @((Get-CimInstance -ClassName 'DefaultDocumentSection' -Namespace 'ROOT\WebAdministration' -Property 'Files').Files.Files.Value)
+                    [System.Collections.ArrayList]$gCIMi = @((Get-CimInstance -ClassName 'DefaultDocumentSection' -Namespace 'ROOT\WebAdministration' -Property 'Files' -ErrorAction SilentlyContinue).Files.Files.Value)
                     If ($gCIMi.Contains('iisstart.htm') -eq $true)
                     {
                         # Fail
