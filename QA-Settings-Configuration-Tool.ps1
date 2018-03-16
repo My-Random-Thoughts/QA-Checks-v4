@@ -54,7 +54,7 @@ Clear-Host
 [string]   $script:SelectedToolLang = ''
 [string]   $script:regExMatch       = '((?:.|\s)+?)(?:(?:[A-Z\- ]+:\n)|(?:#>))'    # Used for all RegEx search matching used in the check comments
 [string]   $script:toolName         = 'QA Settings Configuration Tool'             # QASCT Name
-[string]   $script:toolVersion      = 'v4.18.0308'                                 # QASCT Version (v4.yy.mmdd)
+[string]   $script:toolVersion      = 'v4.18.0316'                                 # QASCT Version (v4.yy.mmdd)
 
 ###################################################################################################
 ##                                                                                               ##
@@ -63,6 +63,7 @@ Clear-Host
 ###################################################################################################
 #region Various Required Scripts
 Function New-IconComboItem { Return (New-Object -TypeName 'PSObject' -Property @{'Icon' = ''; 'Name' = ''; 'Text' = ''; }) }
+
 [System.Collections.ArrayList]$script:IconCombo_Items  = @{}    # - Holds current items
 [System.Collections.ArrayList]$script:IC_T1_ToolLang   = @{}    # \
 [System.Collections.ArrayList]$script:IC_T1_Language   = @{}    #   Holds all the custom
@@ -213,10 +214,10 @@ Function Load-ComboBoxIcon ([System.Windows.Forms.ComboBox]$ComboBox, [string[]]
 
     Switch ($Type)
     {
-        'Timeout'    {                                                                                    [void]$ComboBox.Items.AddRange($script:IC_AS_Timeout   ) }
         'ToolLang'   { $script:IC_T1_ToolLang = @($script:IC_T1_ToolLang | Sort-Object -Property 'Text'); [void]$ComboBox.Items.AddRange($script:IC_T1_ToolLang  ) }
         'Language'   { $script:IC_T1_Language = @($script:IC_T1_Language | Sort-Object -Property 'Text'); [void]$ComboBox.Items.AddRange($script:IC_T1_Language  ) }
         'Settings'   { $script:IC_T1_Settings = @($script:IC_T1_Settings | Sort-Object -Property 'Text'); [void]$ComboBox.Items.AddRange($script:IC_T1_Settings  ) }
+        'Timeout'    {                                                                                    [void]$ComboBox.Items.AddRange($script:IC_AS_Timeout   ) }
         'Concurrent' {                                                                                    [void]$ComboBox.Items.AddRange($script:IC_AS_Concurrent) }
     }
 
@@ -1117,8 +1118,8 @@ Function Show-AdditionalOptions ()
     $ext_Page4.Controls.Add($btn_Module)
 
     $lbl_ModuleList                    = (New-Object -TypeName 'System.Windows.Forms.Label')
-    $lbl_ModuleList.Location           = '180,  93'
-    $lbl_ModuleList.Size               = '270, 102'
+    $lbl_ModuleList.Location           = '168,  93'
+    $lbl_ModuleList.Size               = '282, 102'
     If ($($script:settings.Modules) -ne '') { $lbl_ModuleList.Text = $($script:settings.Modules) } Else { $lbl_ModuleList.Text = $($script:ToolLangINI['add-page4']['None']) }
     $ext_Page4.Controls.Add($lbl_ModuleList)
 #endregion
@@ -1342,10 +1343,10 @@ Function Display-MainForm
 #region FORM Scripts
 #region SCRIPTS-GENERAL
     $tab_Pages_SelectedIndexChanged = {
-        If ($tab_Pages.SelectedIndex -eq 0) {  $pic_t1_RestoreHelp.Visible = $True                   } Else {  $pic_t1_RestoreHelp.Visible = $False }    # Show/Hide 'INI Tools' button
-        If ($tab_Pages.SelectedIndex -eq 1) {  $lbl_t2_ChangesMade.Visible = $script:ShowChangesMade } Else {  $lbl_t2_ChangesMade.Visible = $False }    # Show/Hide 'Selection Changes' label
-        If ($tab_Pages.SelectedIndex -eq 2) {                                                        } Else {                                       }
-        If ($tab_Pages.SelectedIndex -eq 3) {   $btn_t4_Additional.Visible = $True                   } Else {   $btn_t4_Additional.Visible = $False }    # Show/Hide 'Additional Options' button
+        If ($tab_Pages.SelectedIndex -eq 0) { $pic_t1_RestoreHelp.Visible = $True                   } Else { $pic_t1_RestoreHelp.Visible = $False }    # Show/Hide 'INI Tools' button
+        If ($tab_Pages.SelectedIndex -eq 1) { $lbl_t2_ChangesMade.Visible = $script:ShowChangesMade } Else { $lbl_t2_ChangesMade.Visible = $False }    # Show/Hide 'Selection Changes' label
+        If ($tab_Pages.SelectedIndex -eq 2) {  $lbl_t3_ConfigNote.Visible = $True                   } Else {  $lbl_t3_ConfigNote.Visible = $False }    # Show/Hide 'Not All Checks' label
+        If ($tab_Pages.SelectedIndex -eq 3) {  $btn_t4_Additional.Visible = $True                   } Else {  $btn_t4_Additional.Visible = $False }    # Show/Hide 'Additional Options' button
         $btn_t1_RestoreINI.Visible = $pic_t1_RestoreHelp.Visible
     }
 
@@ -2269,7 +2270,7 @@ Function Display-MainForm
         ForEach ($folder In $lst_t2_SelectChecks.Groups)
         {
             $outputFile.AppendLine('')
-            $outputFile.AppendLine('; _________________________________________________________________________________________________')
+            $outputFile.AppendLine('; '.PadRight(100, '_'))
             $outputFile.AppendLine("; $(($folder.Header).ToUpper().Trim())")
 
             ForEach ($check In $folder.Items)
@@ -2404,6 +2405,7 @@ Function ChangeLanguage
     $btn_t3_PrevTab.Text                  = ($script:ToolLangINI['page3']['Prev'])
     $btn_t3_NextTab.Text                  = ($script:ToolLangINI['page3']['Next'])
     $btn_t3_Complete.Text                 = ($script:ToolLangINI['page3']['Complete'])
+    $lbl_t3_ConfigNote.Text               = ($script:ToolLangINI['page3']['ConfigNote'])
 
     ForEach ($tab In $tab_t3_Pages.TabPages) {
         [System.Windows.Forms.ListView]$lvTmp = $tab.Controls["lvw_$($tab.Text)"]
@@ -3082,6 +3084,15 @@ Function ChangeLanguage
     $btn_t3_Complete.Enabled              = $False
     $btn_t3_Complete.Add_Click($btn_t3_Complete_Click)
     $tab_Page3.Controls.Add($btn_t3_Complete)
+
+    $lbl_t3_ConfigNote                    = (New-Object -TypeName 'System.Windows.Forms.Label')
+    $lbl_t3_ConfigNote.Anchor             = 'Bottom, Left, Right'
+    $lbl_t3_ConfigNote.Location           = '102, 635'
+    $lbl_t3_ConfigNote.Size               = '590,  25'
+    $lbl_t3_ConfigNote.Text               = ($script:ToolLangINI['page3']['ConfigNote'])
+    $lbl_t3_ConfigNote.TextAlign          = 'MiddleCenter'
+    $lbl_t3_ConfigNote.Visible            = $False
+    $MainFORM.Controls.Add($lbl_t3_ConfigNote)
 #endregion
 #region TAB 4 - Generate Settings And QA Script
     $lbl_t4_Complete                      = (New-Object -TypeName 'System.Windows.Forms.Label')
