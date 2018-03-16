@@ -1,3 +1,6 @@
+### 2018-03-16
+- `SEC-20` : Added check to makes sure you are not using LMHashes.
+
 ### 2018-03-12
 - `SEC-19` : Added new check for finding any unquoted service paths
 
