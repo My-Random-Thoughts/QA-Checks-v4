@@ -1,6 +1,6 @@
 # INTERNAL CHECK TO GET SERVER DETAILS (HARDWARE, OS, CPU, RAM) FOR TOP OF HTML REPORT
 $int00 = {
-    Function newResult { Return ( New-Object -TypeName PSObject -Property @{server =''; name=''; check=''; datetime=(Get-Date -Format 'yyyy-MM-dd HH:mm'); result='Unknown'; message=''; data=''; blob=''} ) }
+    Function newResult { Return ( New-Object -TypeName 'PSObject' -Property @{server =''; name=''; check=''; datetime=(Get-Date -Format 'yyyy-MM-dd HH:mm'); result='Unknown'; message=''; data=''; blob=''} ) }
     $script:lang = @{}
 # LANGUAGE INSERT
     Function int-00-internal-check
@@ -59,7 +59,7 @@ Function Show-HelpScreen
     Write-Colr '        QA.ps1',' [-ComputerName] ','.'                                    -Colour          Yellow, Gray, Yellow, Gray, Yellow
     Write-Colr '        QA.ps1',' [-ComputerName] ','server01'                             -Colour          Yellow, Gray, Yellow, Gray, Yellow
     Write-Host ''
-    Write-Host "    $($script:lang['Help13'])"                                              -ForegroundColor Cyan
+    Write-Host "    $($script:lang['Help13'])"                                             -ForegroundColor Cyan
     Write-Colr '      ', $($script:lang['Help14'])                                         -Colour          Cyan, White
     Write-Colr '        QA.ps1',' [-ComputerName] ','server01, server02, server03, ...'    -Colour          Yellow, Gray, Yellow, Gray, Yellow
     Write-Colr '      ', $($script:lang['Help15'])                                         -Colour          Cyan, White
@@ -492,7 +492,7 @@ Function Get-ResultsSplit ([System.Collections.ArrayList]$ResultsInput)
     [string]$ma = @($ToSplit | Where-Object  { $_.result -eq $script:lang['Manual']         }).Count.ToString()
     [string]$no = @($ToSplit | Where-Object  { $_.result -eq $script:lang['Not-Applicable'] }).Count.ToString()
     [string]$er = @($ToSplit | Where-Object  { $_.result -eq $script:lang['Error']          }).Count.ToString()
-    [psobject]$return = New-Object -TypeName PSObject -Property @{ 'p'=$pa; 'w'=$wa; 'f'=$fa; 'm'=$ma; 'n'=$no; 'e'=$er; }
+    [psobject]$return = New-Object -TypeName 'PSObject' -Property @{ 'p'=$pa; 'w'=$wa; 'f'=$fa; 'm'=$ma; 'n'=$no; 'e'=$er; }
     Return $return
 }
 
@@ -797,9 +797,9 @@ Function DivLine { Write-Host ' '.PadRight($script:screenwidth + 1, $E) -Foregro
 ###################################################################################################
 
 # COMPILER INSERT
-[int]      $script:waitTime       =  100    # Time to wait between starting new tasks (milliseconds)
-[int]      $script:failurecount   =    0    #
-[int]      $script:ccVerbose      =    1    # 
+[int]   $script:waitTime        =  100
+[int]   $script:failurecount    =  0
+[int]   $script:ccVerbose       =  1
 
 [System.Collections.ArrayList]$script:AllResults = @()
 [System.Collections.ArrayList]$script:servers    = @()
@@ -818,6 +818,7 @@ Try
     }
 }
 Catch { }
+If ($Host.Name -eq 'Windows PowerShell ISE Host') { $ws = New-Object -TypeName 'System.Drawing.Size'(135, 9999) }
 [int]$script:screenwidth = ($ws.Width - 2)
 
 Check-CommandLine
