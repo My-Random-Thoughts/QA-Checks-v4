@@ -1,7 +1,7 @@
 Function Check-IsPortOpen ([string]$DestinationServer, [int]$Port)
 {
     Try {
-        $tcp  = New-Object System.Net.Sockets.TcpClient
+        $tcp  = New-Object -TypeName 'System.Net.Sockets.TcpClient'
         $con  = $tcp.BeginConnect($DestinationServer, $port, $null, $null)
         $wait = $con.AsyncWaitHandle.WaitOne(3000, $false)
         If (-not $wait) { $tcp.Close(); Return $false }
