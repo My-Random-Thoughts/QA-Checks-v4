@@ -15,9 +15,11 @@
     RESULTS:
         PASS:
             All registry settings and patches are correct
-
+        WARNING:
         FAIL:
             One or more registry settings or patches are not correct
+        MANUAL:
+        NA:
 
     APPLIES:
         All Servers
