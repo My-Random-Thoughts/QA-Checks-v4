@@ -54,7 +54,7 @@ Clear-Host
 [string]   $script:SelectedToolLang = ''
 [string]   $script:regExMatch       = '((?:.|\s)+?)(?:(?:[A-Z\- ]+:\n)|(?:#>))'    # Used for all RegEx search matching used in the check comments
 [string]   $script:toolName         = 'QA Settings Configuration Tool'             # QASCT Name
-[string]   $script:toolVersion      = 'v4.18.0316'                                 # QASCT Version (v4.yy.mmdd)
+[string]   $script:toolVersion      = 'v4.18.0322'                                 # QASCT Version (v4.yy.mmdd)
 
 ###################################################################################################
 ##                                                                                               ##
@@ -1137,7 +1137,6 @@ Function Show-AboutSplash ()
         Try { $sysFontH.Dispose() } Catch {}
         $frm_About.Remove_FormClosed($frm_About_Cleanup_FormClosed)
         $frm_About.Dispose()
-        $sysFontH.Dispose()
     }
 #endregion
 #region MAIN FORM
@@ -1289,6 +1288,7 @@ Function Display-MainForm
         # Setup default views/messages
         $lbl_t3_NoChecks.Visible        = $True
         $lst_t2_SelectChecks.CheckBoxes = $False
+        $lst_t2_SelectChecks.HideSelection = $True
         $lst_t2_SelectChecks.Groups.Add('PleaseNote', ($script:ToolLangINI['page2']['PleaseNote']))    # Second quotes stops error in 'lst_t2_SelectChecks_SelectedIndexChanged'
         Add-ListViewItem -ListView $lst_t2_SelectChecks -Name '*PN1' -SubItems @('', '')                                                -ImageIndex -1 -Group 'PleaseNote' -Enabled $True
         Add-ListViewItem -ListView $lst_t2_SelectChecks -Name '*PN2' -SubItems @($($script:ToolLangINI['page2']['SelectLocation']), '') -ImageIndex -1 -Group 'PleaseNote' -Enabled $True
@@ -1585,7 +1585,7 @@ Function Display-MainForm
 
                     # Checks to see if the "checkName" value has been retreved or not
                     If ([string]::IsNullOrEmpty($checkName) -eq $False) { $checkName = $checkName.Trim("'") }
-                    Else                                                { $checkName = '*' + $TextInfo.ToTitleCase($(($Name.Substring(6)).Replace('-', ' '))) }
+                    Else                                                { $checkName = '*' + $TextInfo.ToTitleCase($(($Name.Substring(6)).Replace('-', ' ')).ToLower()) }
 
                     [string]$getContent = ''
                     # Default back to the scripts description of help if required
@@ -1845,6 +1845,8 @@ Function Display-MainForm
 
     $lst_t2_SelectChecks_SelectedIndexChanged = {
         If ($lst_t2_SelectChecks.SelectedItems.Count -eq 1) {
+            If ($lst_t2_SelectChecks.SelectedItems[0].Text -eq '') { Return }
+            
             $lnk_t2_Description.Text = (($lst_t2_SelectChecks.SelectedItems[0].SubItems[2].Text) -replace ('!n',"`n`n")) + ' '
             $lnk_t2_Description.LinkArea = (New-Object -TypeName 'System.Windows.Forms.LinkArea'(0, 0))
 
@@ -1885,10 +1887,10 @@ Function Display-MainForm
         $pic_t2_SearchHelp.BringToFront()
         $pic_t2_SearchClear.BringToFront()
 
-        If ($txt_t2_Search.Text.Length -gt 1)
+        If ($txt_t2_Search.Text.Length -gt 0)
         {
             $sQuery = $txt_t2_Search.Text
-            $pic_t2_SearchHelp.Visible = $False
+            $pic_t2_SearchHelp.Visible  = $False
             $pic_t2_SearchClear.Visible = $True
         }
 
