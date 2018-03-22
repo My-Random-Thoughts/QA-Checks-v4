@@ -6,7 +6,7 @@
         RequriedSetting - "0|1|2" - Each adapter should be set to this value
 
     DEFAULT-VALUES:
-        RequriedSetting = 2
+        RequriedSetting = '2'
 
     DEFAULT-STATE:
         Enabled
