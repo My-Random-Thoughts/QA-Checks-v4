@@ -10,7 +10,7 @@ Function Check-Software ([string]$DisplayName)
     If (($regKey) -and ($keyVal.Count -gt 0)) { ForEach ($app In $keyVal) {
             $appKey = $regKey.OpenSubKey($app).GetValue('DisplayName')
             If ($appKey -like ("*$DisplayName*")) {
-                [psobject]$verCheck = (New-Object -TypeName PSObject -Property @{'DisplayName' = $($regKey.OpenSubKey($app).GetValue('DisplayName'));
+                [psobject]$verCheck = (New-Object -TypeName 'PSObject' -Property @{'DisplayName' = $($regKey.OpenSubKey($app).GetValue('DisplayName'));
                 'Version' = $($regKey.OpenSubKey($app).GetValue('DisplayVersion'))}); Return $verCheck } }
         If ($script:chkValues['Win32_Product'] -like '*Wow6432Node*') {
             $script:chkValues['Win32_Product'] = $script:chkValues['Win32_Product'].Replace('Wow6432Node\', '')
