@@ -240,7 +240,7 @@ Catch
     Break
 }
 
-[string]$shared       = "Function newResult { Return ( New-Object -TypeName PSObject -Property @{server =''; name=''; check=''; datetime=(Get-Date -Format 'yyyy-MM-dd HH:mm'); result='Unknown'; message=''; data=''; blob=''} ) }"
+[string]$shared       = "Function newResult { Return ( New-Object -TypeName 'PSObject' -Property @{server =''; name=''; check=''; datetime=(Get-Date -Format 'yyyy-MM-dd HH:mm'); result='Unknown'; message=''; data=''; blob=''} ) }"
 [string]$scriptHeader = @"
 <#
     ###############################################################################################
@@ -504,7 +504,6 @@ $engine = $engine.Replace('# COMPILER INSERT', @"
 [string]`$script:sessionUseSSL   = '$($iniSettings['settings']['sessionUseSSL']    )'
 [string]`$script:requiredModules = '$($iniSettings['settings']['RequiredModules']  )'
 "@)
-
 
 [void]$qaScript.Append($engine)
 Out-File -FilePath $outPath -InputObject $qaScript.ToString() -Encoding utf8
