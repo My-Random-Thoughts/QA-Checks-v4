@@ -1,3 +1,6 @@
+### 2018-03-23
+- `SEC-18` : Removed the patch checking as there were multiple possible values.  Registry checking still exists.
+
 ### 2018-03-16
 - `SEC-20` : Added check to makes sure you are not using LMHashes.
 
