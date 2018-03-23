@@ -14,10 +14,10 @@
 
     RESULTS:
         PASS:
-            All registry settings and patches are correct
+            All registry settings are correct
         WARNING:
         FAIL:
-            One or more registry settings or patches are not correct
+            One or more registry settings are not correct
         MANUAL:
         NA:
 
@@ -39,30 +39,6 @@ Function sec-18-speculative-execution
 
     Try
     {
-        # First check if the patch is installed
-        [string]$checkOS = ((Get-CimInstance -ClassName 'Win32_OperatingSystem' -Property 'Caption').Caption)
-        [string]$patch = ''
-
-        If     ($checkOS -like '*2008 R2*') { $patch = 'KB4056897' }
-        ElseIf ($checkOS -like '*2012 R2*') { $patch = 'KB4056898' }
-        ElseIf ($checkOS -like '*2016*'   ) { $patch = 'KB4056890' }
-        Else
-        {
-            $result.result  = $script:lang['Not-Applicable']
-            $result.message = $script:lang['n001']
-            $Result.data    = $checkOS
-            Return $result
-        }
-
-        [string]$patchInstalled = ''
-        $session  = [activator]::CreateInstance([type]::GetTypeFromProgID('Microsoft.Update.Session'))
-        $searcher = $session.CreateUpdateSearcher()
-        $history  = $searcher.GetTotalHistoryCount()
-        If ($history -gt 0) { $patchInstalled = ($searcher.QueryHistory(0, 99999999) | Where-Object { $_.Title -like "%$patch%" }) }
-        If ([string]::IsNullOrEmpty($patchInstalled) -eq $true) { $result.data = 'Patch ' + $patch + ' (missing),#' }
-
-
-        # Second check the known registry keys
         Try {
             [string]$gITMp1 = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name 'FeatureSettingsOverride'            -ErrorAction Stop).FeatureSettingsOverride
             If ($gITMp1 -ne '0') { $result.data += "FeatureSettingsOverride ($($script:lang['dt02'])),#" }
