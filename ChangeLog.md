@@ -1,3 +1,6 @@
+### 2018-04-06
+- `SYS-24` : Added new check to search for a specific file and report on any results.
+
 ### 2018-03-23
 - `SEC-18` : Removed the patch checking as there were multiple possible values.  Registry checking still exists.
 
