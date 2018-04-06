@@ -17,7 +17,7 @@ Most of this extra tooling and configuration should be automated, however checks
 
 ---
 ## The Checks
-There are over 100 checks split over 10 separate sections.  These are executed whenever the QA script is run against one or more servers and can take anywhere between 30 seconds and a couple of minutes to complete.  If you are checking multiple servers then this time is per server.  
+There are over 100 checks split into 10 separate sections.  These are executed whenever the QA script is run against one or more servers and can take anywhere between 30 seconds and a couple of minutes to complete.  If you are checking multiple servers then this time is per server.  
 
 For a full list of checks and their sections, check the GitHub Wiki page:
    > https://github.com/My-Random-Thoughts/QA-Checks-v4/wiki/Sections
