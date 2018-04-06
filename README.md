@@ -13,7 +13,6 @@ Most of this extra tooling and configuration should be automated, however checks
 
 #### Unsupported Operating Systems
    - `Windows 2003 Server`
-   - `Any non-server operating system` (*While the checks will work, they are not supported*)
    - `Any non-Windows operating system`
 
 ---
