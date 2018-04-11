@@ -667,7 +667,7 @@ SECTION_LINKS
         If ($sectionNew -ne $sectionOld)
         {
                     $sectionOld   = $sectionNew
-            [string]$selctionName = $script:lang[$script:lang[$sectionNew]]
+            Try { [string]$selctionName = $script:lang[$script:lang[$sectionNew]] } Catch { [string]$selctionName = "*$sectionNew" }
             [string]$sectionRow   = "`n    <!-- SECTION CHANGE -->`n    <div id=`"$selctionName`" class=`"sectionItem`"><span class=`"sectionTitle`">$selctionName</span></div>`n"
             [void]  $sectionLinks.AppendLine("        <a href=`"#$selctionName`"><span class=`"tocEntry`">$selctionName</span></a>")
         }
@@ -675,12 +675,13 @@ SECTION_LINKS
         [void]$body.Append($sectionRow)
 
         $addCheck = $reportTemplate
-        $addCheck = $addCheck.Replace('SECTION_CODE'  , ($_.check  ).SubString(0,3)        )    # ACC
-        $addCheck = $addCheck.Replace('CHECK_NUMBER'  , ($_.check  ).SubString(4,2)        )    # 01
-        $addCheck = $addCheck.Replace('CHECK_TITLE'   , ($_.name   )                       )    # 
-        $addCheck = $addCheck.Replace('CHECK_MESSAGE' , ($_.message).Replace(',#',',<br/>'))    # 
-        If ([string]::IsNullOrEmpty($_.data) -eq $false) { $addCheck = $addCheck.Replace('CHECK_DATA', $($_.data -as [string]).Replace(',#',',<br/>')) }
-        Else                                             { $addCheck = $addCheck.Replace('CHECK_DATA', $script:lang['None'])                           }
+        $addCheck = $addCheck.Replace('SECTION_CODE', ($_.check).SubString(0,3))    # ACC
+        $addCheck = $addCheck.Replace('CHECK_NUMBER', ($_.check).SubString(4,2))    # 01
+        $addCheck = $addCheck.Replace('CHECK_TITLE' , ($_.name )               )    # 
+        If ([string]::IsNullOrEmpty($_.message) -eq $false) { $addCheck = $addCheck.Replace('CHECK_MESSAGE', $($_.message -as [string]).Replace(',#',',<br/>')) }
+        Else                                                { $addCheck = $addCheck.Replace('CHECK_MESSAGE', '!! Missing Language Text !!')                     }
+        If ([string]::IsNullOrEmpty($_.data)    -eq $false) { $addCheck = $addCheck.Replace('CHECK_DATA'   , $($_.data    -as [string]).Replace(',#',',<br/>')) }
+        Else                                                { $addCheck = $addCheck.Replace('CHECK_DATA'   , $script:lang['None'])                              }
 
         Switch ($_.result)
         {
@@ -751,7 +752,7 @@ Function Add-HoverHelp
             [void]$help.Append($("<br/><li><span>$($script:lang['AppliesTo'])</span><span>$(($xml.xml.applies).Replace(', ','<br/>'))</span></li></div>"))
             $help = $help.Replace('!n', '<br/>')
         }
-        Catch { $help = $($_.Exception.Message) }    # No help if XML is invalid
+        Catch { }    # No help if XML is invalid
     }
     Return $($help.ToString())
 }
