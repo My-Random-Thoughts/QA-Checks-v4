@@ -54,7 +54,7 @@ Clear-Host
 [string]   $script:SelectedToolLang = ''
 [string]   $script:regExMatch       = '((?:.|\s)+?)(?:(?:[A-Z\- ]+:\n)|(?:#>))'    # Used for all RegEx search matching used in the check comments
 [string]   $script:toolName         = 'QA Settings Configuration Tool'             # QASCT Name
-[string]   $script:toolVersion      = 'v4.18.0322'                                 # QASCT Version (v4.yy.mmdd)
+[string]   $script:toolVersion      = 'v4.18.0412'                                 # QASCT Version (v4.yy.mmdd)
 
 ###################################################################################################
 ##                                                                                               ##
@@ -1286,9 +1286,10 @@ Function Display-MainForm
         $pic_t2_SearchHelp.Image     = $img_MainForm.Images[13]    # Search Help
 
         # Setup default views/messages
-        $lbl_t3_NoChecks.Visible        = $True
-        $lst_t2_SelectChecks.CheckBoxes = $False
+        $lbl_t3_NoChecks.Visible           = $True
+        $lst_t2_SelectChecks.CheckBoxes    = $False
         $lst_t2_SelectChecks.HideSelection = $True
+
         $lst_t2_SelectChecks.Groups.Add('PleaseNote', ($script:ToolLangINI['page2']['PleaseNote']))    # Second quotes stops error in 'lst_t2_SelectChecks_SelectedIndexChanged'
         Add-ListViewItem -ListView $lst_t2_SelectChecks -Name '*PN1' -SubItems @('', '')                                                -ImageIndex -1 -Group 'PleaseNote' -Enabled $True
         Add-ListViewItem -ListView $lst_t2_SelectChecks -Name '*PN2' -SubItems @($($script:ToolLangINI['page2']['SelectLocation']), '') -ImageIndex -1 -Group 'PleaseNote' -Enabled $True
@@ -1571,6 +1572,7 @@ Function Display-MainForm
                 # FOR TAB-2 LIST OF CHECKS
                 # Generate GUID for group IDs
                 [string]$guid = ([guid]::NewGuid() -as [string]).Split('-')[0]
+                If (-not $script:languageINI['Section'][$folderName]) { $script:languageINI['Section'][$folderName] = "*$folderName" }    # Add any missing folders
                 $lst_t2_SelectChecks.Groups.Add("$guid", $script:languageINI['Section'][$folderName])
 
                 ForEach ($script In ($scripts | Sort-Object -Property 'Name'))
@@ -1812,7 +1814,7 @@ Function Display-MainForm
 
     Function btn_t2_SelectButtons([string]$SourceButton)
     {
-        $MainFORM.Cursor = 'AppStarting'    # Not 'Wait'
+        $MainFORM.Cursor = 'AppStarting'
         $script:UpdateSelectedCount = $False
 
         If ($SourceButton -eq 'SelectReset')
@@ -1846,8 +1848,8 @@ Function Display-MainForm
     $lst_t2_SelectChecks_SelectedIndexChanged = {
         If ($lst_t2_SelectChecks.SelectedItems.Count -eq 1) {
             If ($lst_t2_SelectChecks.SelectedItems[0].Text -eq '') { Return }
-            
-            $lnk_t2_Description.Text = (($lst_t2_SelectChecks.SelectedItems[0].SubItems[2].Text) -replace ('!n',"`n`n")) + ' '
+
+            $lnk_t2_Description.Text     = (($lst_t2_SelectChecks.SelectedItems[0].SubItems[2].Text) -replace ('!n',"`n`n")) + ' '
             $lnk_t2_Description.LinkArea = (New-Object -TypeName 'System.Windows.Forms.LinkArea'(0, 0))
 
             # Search for and enable any links within descriptions (only one per description)
@@ -2118,10 +2120,10 @@ Function Display-MainForm
         }
 
         $tim_CompleteButton.Start()
-        $tab_Pages.SelectedIndex     =       2
-        $btn_t4_Save.Enabled         =       $True
-        $lbl_t3_NoChecks.Visible     =       $False
-        $script:ShowChangesMade      =       $True
+        $tab_Pages.SelectedIndex     = 2
+        $btn_t4_Save.Enabled         = $True
+        $lbl_t3_NoChecks.Visible     = $False
+        $script:ShowChangesMade      = $True
         Update-NavButtons
         $MainFORM.Cursor             = 'Default'
     }
