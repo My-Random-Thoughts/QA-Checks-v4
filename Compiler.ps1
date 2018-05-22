@@ -117,10 +117,10 @@ Function DrawMenu ($CursorStart, [array]$menuItems, [int]$menuPosition, [string]
     ForEach ($item In $menuItems.Count) { Write-Host ''.PadRight(80, ' ') }
     $host.UI.RawUI.CursorPosition = $CursorStart
 
-    [color]$fc  = [System.ConsoleColor]::White
-    [color]$bc  =  (Get-Host).UI.RawUI.BackgroundColor
-    [int]  $l   =   $menuItems.length - 1
-    [int]  $max = (($menuItems | Measure-Object -Maximum -Property Length).Maximum) + 4
+    [System.ConsoleColor]$fc  = [System.ConsoleColor]::White
+    [System.ConsoleColor]$bc  =  (Get-Host).UI.RawUI.BackgroundColor
+    [int]                $l   =   $menuItems.length - 1
+    [int]                $max = (($menuItems | Measure-Object -Maximum -Property Length).Maximum) + 4
 
     Write-host "  $menuTitle`n" -ForegroundColor White
     For ($i = 0; $i -le $l; $i++)
