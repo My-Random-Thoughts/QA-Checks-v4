@@ -541,14 +541,14 @@ Function Export-Results ([System.Collections.ArrayList]$ResultsInput, [int]$Curr
         .header2 > .headerServer > .serverName { font-size: 266%; line-height: 35px; text-transform: uppercase; }
         .header2 > .headerServer > .row { font-size: 100%; padding-left: 3px; padding-top: 2px; }
 
-        /*  Size of check code/num boxes :                  (6 x (100 + 12)) + 10  = 682px  */
-        /*  Slightly larger boxes        :                  (6 x (110 + 12)) + 10  = 742px  */
-        /*  Just a bit bigger boxes      :                  (6 x (115 + 12)) + 10  = 774px  */
+        /*  Size of check code/num boxes :                  (6 x (100 + 12)) + 10  = 794px  */
+        /*  Slightly larger boxes        :                  (6 x (110 + 12)) + 10  = 864px  */
+        /*  Just a bit bigger boxes      :                  (6 x (115 + 12)) + 10  = 899px  */
 
-        .header2 > .summary { float:right; background: #f8f8f8; height: 77px; width: 742px; padding-top: 10px; border-right: 1px solid #ccc; border-bottom: 1px solid #cccccc; }
+        .header2 > .summary { float:right; background: #f8f8f8; height: 77px; width: 864px; padding-top: 10px; border-right: 1px solid #ccc; border-bottom: 1px solid #cccccc; }
         .header2 > .summary > .summaryBox { float: left; height: 65px; width: 110px; text-align: center; margin-left: 10px; padding: 0px; border: 1px solid #000; cursor: default; }
-        .header2 > .summary > .summaryBox > .code { font-size: 133%; padding-top: 5px; display: block; font-weight: bold; }
-        .header2 > .summary > .summaryBox > .num  { font-size: 233%; }
+        .header2 > .summary > .summaryBox > a > .code { font-size: 133%; padding-top: 5px; display: block; font-weight: bold; }
+        .header2 > .summary > .summaryBox > a > .num  { font-size: 233%; }
 
         .sectionTitle    { padding: 5px; font-size: 233%; text-align: center; letter-spacing: 3px; display: block; }
         .sectionItem     { background: #707070; color: #ffffff; width: 99%; display: block; margin: 25px auto  5px auto; padding: 0; overflow: auto; }
@@ -572,7 +572,7 @@ Function Export-Results ([System.Collections.ArrayList]$ResultsInput, [int]$Curr
         .tocEntry       { color: #000000; background: #f8f8f8; font-size: 125%; border: 1px solid #707070; margin: 2px; padding:  5px 10px; font-weight: bold; }
         .btt:hover      { color: #ffffff; background: #707070; border: 1px solid #000000; }
         .tocEntry:hover { color: #ffffff; background: #707070; border: 1px solid #000000; }
-        a               { color: #000000; text-decoration: none; }
+        a               { color: inherit; text-decoration: none; }
 
         .note                { text-decoration: none; }
         .note div.help       { display: none; }
@@ -583,6 +583,7 @@ Function Export-Results ([System.Collections.ArrayList]$ResultsInput, [int]$Curr
         .note li span:first-child { text-align: right; min-width: 120px; max-width: 120px; font-weight: bold; padding-right: 7px; }
         .note li span:last-child  { padding-left: 7px; border-left: 1px solid #000000; }
 
+        .x  { background: #ffffff !important; }
         .p  { background: #b3ffb3 !important; }
         .w  { background: #ffffb3 !important; }
         .f  { background: #ffb3b3 !important; }
@@ -591,6 +592,26 @@ Function Export-Results ([System.Collections.ArrayList]$ResultsInput, [int]$Curr
         .e  { background: #c80000 !important; color: #ffffff !important; }
         .eB { background: #c80000 !important; color: #ffffff !important; border: 1px solid #ffffff !important; }
     </style>
+
+    <script>
+        function showSwitch(sId) {
+            var d = document.getElementsByTagName("div");
+            for (var i = 0; i < d.length; i++) { if (d[i].getAttribute("id") == sId) { d[i].style.display = 'block'; } }
+        }
+
+        function hideSwitch(sId) {
+            var d = document.getElementsByTagName("div");
+            for (var i = 0; i < d.length; i++) { if (d[i].getAttribute("id") == sId) { d[i].style.display = 'none';  } }
+        }
+
+        function showall() { showSwitch("p"); showSwitch("w"); showSwitch("f"); showSwitch("m"); showSwitch("n"); showSwitch("eB"); }
+        function sh_pass() { showSwitch("p"); hideSwitch("w"); hideSwitch("f"); hideSwitch("m"); hideSwitch("n"); hideSwitch("eB"); }
+        function sh_warn() { hideSwitch("p"); showSwitch("w"); hideSwitch("f"); hideSwitch("m"); hideSwitch("n"); hideSwitch("eB"); }
+        function sh_fail() { hideSwitch("p"); hideSwitch("w"); showSwitch("f"); hideSwitch("m"); hideSwitch("n"); hideSwitch("eB"); }
+        function sh_manu() { hideSwitch("p"); hideSwitch("w"); hideSwitch("f"); showSwitch("m"); hideSwitch("n"); hideSwitch("eB"); }
+        function sh_nota() { hideSwitch("p"); hideSwitch("w"); hideSwitch("f"); hideSwitch("m"); showSwitch("n"); hideSwitch("eB"); }
+        function sh_erro() { hideSwitch("p"); hideSwitch("w"); hideSwitch("f"); hideSwitch("m"); hideSwitch("n"); showSwitch("eB"); }
+    </script>
 </head>
 <body>
 BODY_GOES_HERE
@@ -628,12 +649,13 @@ BODY_GOES_HERE
             <div class="row"       >$($ResultsInput[0].Data.Split('|')[2]),&nbsp;&nbsp;&nbsp;&nbsp;$($ResultsInput[0].Data.Split('|')[3])</div>
         </div>
         <div class="summary">
-            <div class="summaryBox p"><span class="code">$($script:lang['Pass']          )</span><span class="num">$($resultsplit.p)</span></div>
-            <div class="summaryBox w"><span class="code">$($script:lang['Warning']       )</span><span class="num">$($resultsplit.w)</span></div>
-            <div class="summaryBox f"><span class="code">$($script:lang['Fail']          )</span><span class="num">$($resultsplit.f)</span></div>
-            <div class="summaryBox m"><span class="code">$($script:lang['Manual']        )</span><span class="num">$($resultsplit.m)</span></div>
-            <div class="summaryBox n"><span class="code">$($script:lang['Not-Applicable'])</span><span class="num">$($resultsplit.n)</span></div>
-            <div class="summaryBox e"><span class="code">$($script:lang['Error']         )</span><span class="num">$($resultsplit.e)</span></div>
+            <div class="summaryBox x"><a href="#" onclick="showall();"><span class="code">$($script:lang['ShowAll']       )</span><span class="num">$($ResultsInput.Count)</span></a></div>
+            <div class="summaryBox p"><a href="#" onclick="sh_pass();"><span class="code">$($script:lang['Pass']          )</span><span class="num">$($resultsplit.p     )</span></a></div>
+            <div class="summaryBox w"><a href="#" onclick="sh_warn();"><span class="code">$($script:lang['Warning']       )</span><span class="num">$($resultsplit.w     )</span></a></div>
+            <div class="summaryBox f"><a href="#" onclick="sh_fail();"><span class="code">$($script:lang['Fail']          )</span><span class="num">$($resultsplit.f     )</span></a></div>
+            <div class="summaryBox m"><a href="#" onclick="sh_manu();"><span class="code">$($script:lang['Manual']        )</span><span class="num">$($resultsplit.m     )</span></a></div>
+            <div class="summaryBox n"><a href="#" onclick="sh_nota();"><span class="code">$($script:lang['Not-Applicable'])</span><span class="num">$($resultsplit.n     )</span></a></div>
+            <div class="summaryBox e"><a href="#" onclick="sh_erro();"><span class="code">$($script:lang['Error']         )</span><span class="num">$($resultsplit.e     )</span></a></div>
         </div>
     </div>
     <div style="clear:both;"></div>
@@ -653,7 +675,7 @@ SECTION_LINKS
     $ResultsInput   = @($ResultsInput | Select-Object -Skip 1 | Sort-Object check)
 
     $reportTemplate = @"
-    <div class="checkItem"><div class="boxContainer"><div class="check RESULT_COLOUR HELP_SECTION"><span class="code">SECTION_CODE</span><span class="num">CHECK_NUMBER</span>
+    <div id="RESULT_COLOUR" class="checkItem"><div class="boxContainer"><div class="check RESULT_COLOUR HELP_SECTION"><span class="code">SECTION_CODE</span><span class="num">CHECK_NUMBER</span>
     </div></div><div class="contentContainer"><span class="checkContainer"><div class="name row">CHECK_TITLE</div><div class="message row">CHECK_MESSAGE</div></span>
     <span class="resultContainer"><div class="data"><div class="dataHeader">$($script:lang['HTML_Data'])</div><div class="dataItem">CHECK_DATA</div></div></span></div></div>
 
@@ -675,9 +697,9 @@ SECTION_LINKS
         [void]$body.Append($sectionRow)
 
         $addCheck = $reportTemplate
-        $addCheck = $addCheck.Replace('SECTION_CODE', ($_.check).SubString(0,3))    # ACC
-        $addCheck = $addCheck.Replace('CHECK_NUMBER', ($_.check).SubString(4,2))    # 01
-        $addCheck = $addCheck.Replace('CHECK_TITLE' , ($_.name )               )    # 
+        $addCheck = $addCheck.Replace('SECTION_CODE'  , ($_.check  ).SubString(0,3)        )    # ACC
+        $addCheck = $addCheck.Replace('CHECK_NUMBER'  , ($_.check  ).SubString(4,2)        )    # 01
+        $addCheck = $addCheck.Replace('CHECK_TITLE'   , ($_.name   )                       )    # 
         If ([string]::IsNullOrEmpty($_.message) -eq $false) { $addCheck = $addCheck.Replace('CHECK_MESSAGE', $($_.message -as [string]).Replace(',#',',<br/>')) }
         Else                                                { $addCheck = $addCheck.Replace('CHECK_MESSAGE', '!! Missing Language Text !!')                     }
         If ([string]::IsNullOrEmpty($_.data)    -eq $false) { $addCheck = $addCheck.Replace('CHECK_DATA'   , $($_.data    -as [string]).Replace(',#',',<br/>')) }
