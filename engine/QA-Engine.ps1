@@ -546,9 +546,9 @@ Function Export-Results ([System.Collections.ArrayList]$ResultsInput, [int]$Curr
         /*  Just a bit bigger boxes      :                  (6 x (115 + 12)) + 10  = 899px  */
 
         .header2 > .summary { float:right; background: #f8f8f8; height: 77px; width: 864px; padding-top: 10px; border-right: 1px solid #ccc; border-bottom: 1px solid #cccccc; }
-        .header2 > .summary > .summaryBox { float: left; height: 65px; width: 110px; text-align: center; margin-left: 10px; padding: 0px; border: 1px solid #000; cursor: default; }
-        .header2 > .summary > .summaryBox > a > .code { font-size: 133%; padding-top: 5px; display: block; font-weight: bold; }
-        .header2 > .summary > .summaryBox > a > .num  { font-size: 233%; }
+        .header2 > .summary > a > .summaryBox { float: left; height: 65px; width: 110px; text-align: center; margin-left: 10px; padding: 0px; border: 1px solid #000; }
+        .header2 > .summary > a > .summaryBox > .code { font-size: 133%; padding-top: 5px; display: block; font-weight: bold; }
+        .header2 > .summary > a > .summaryBox > .num  { font-size: 233%; }
 
         .sectionTitle    { padding: 5px; font-size: 233%; text-align: center; letter-spacing: 3px; display: block; }
         .sectionItem     { background: #707070; color: #ffffff; width: 99%; display: block; margin: 25px auto  5px auto; padding: 0; overflow: auto; }
@@ -649,13 +649,13 @@ BODY_GOES_HERE
             <div class="row"       >$($ResultsInput[0].Data.Split('|')[2]),&nbsp;&nbsp;&nbsp;&nbsp;$($ResultsInput[0].Data.Split('|')[3])</div>
         </div>
         <div class="summary">
-            <div class="summaryBox x"><a href="#" onclick="showall();"><span class="code">$($script:lang['ShowAll']       )</span><span class="num">$($ResultsInput.Count)</span></a></div>
-            <div class="summaryBox p"><a href="#" onclick="sh_pass();"><span class="code">$($script:lang['Pass']          )</span><span class="num">$($resultsplit.p     )</span></a></div>
-            <div class="summaryBox w"><a href="#" onclick="sh_warn();"><span class="code">$($script:lang['Warning']       )</span><span class="num">$($resultsplit.w     )</span></a></div>
-            <div class="summaryBox f"><a href="#" onclick="sh_fail();"><span class="code">$($script:lang['Fail']          )</span><span class="num">$($resultsplit.f     )</span></a></div>
-            <div class="summaryBox m"><a href="#" onclick="sh_manu();"><span class="code">$($script:lang['Manual']        )</span><span class="num">$($resultsplit.m     )</span></a></div>
-            <div class="summaryBox n"><a href="#" onclick="sh_nota();"><span class="code">$($script:lang['Not-Applicable'])</span><span class="num">$($resultsplit.n     )</span></a></div>
-            <div class="summaryBox e"><a href="#" onclick="sh_erro();"><span class="code">$($script:lang['Error']         )</span><span class="num">$($resultsplit.e     )</span></a></div>
+            <a href="#" onclick="showall();"><div class="summaryBox x"><span class="code">$($script:lang['ShowAll']       )</span><span class="num">$($ResultsInput.Count)</span></div></a>
+            <a href="#" onclick="sh_pass();"><div class="summaryBox p"><span class="code">$($script:lang['Pass']          )</span><span class="num">$($resultsplit.p     )</span></div></a>
+            <a href="#" onclick="sh_warn();"><div class="summaryBox w"><span class="code">$($script:lang['Warning']       )</span><span class="num">$($resultsplit.w     )</span></div></a>
+            <a href="#" onclick="sh_fail();"><div class="summaryBox f"><span class="code">$($script:lang['Fail']          )</span><span class="num">$($resultsplit.f     )</span></div></a>
+            <a href="#" onclick="sh_manu();"><div class="summaryBox m"><span class="code">$($script:lang['Manual']        )</span><span class="num">$($resultsplit.m     )</span></div></a>
+            <a href="#" onclick="sh_nota();"><div class="summaryBox n"><span class="code">$($script:lang['Not-Applicable'])</span><span class="num">$($resultsplit.n     )</span></div></a>
+            <a href="#" onclick="sh_erro();"><div class="summaryBox e"><span class="code">$($script:lang['Error']         )</span><span class="num">$($resultsplit.e     )</span></div></a>
         </div>
     </div>
     <div style="clear:both;"></div>
