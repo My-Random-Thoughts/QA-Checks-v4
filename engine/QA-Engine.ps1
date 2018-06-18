@@ -649,13 +649,13 @@ BODY_GOES_HERE
             <div class="row"       >$($ResultsInput[0].Data.Split('|')[2]),&nbsp;&nbsp;&nbsp;&nbsp;$($ResultsInput[0].Data.Split('|')[3])</div>
         </div>
         <div class="summary">
-            <a href="#" onclick="showall();"><div class="summaryBox x"><span class="code">$($script:lang['ShowAll']       )</span><span class="num">$($ResultsInput.Count)</span></div></a>
-            <a href="#" onclick="sh_pass();"><div class="summaryBox p"><span class="code">$($script:lang['Pass']          )</span><span class="num">$($resultsplit.p     )</span></div></a>
-            <a href="#" onclick="sh_warn();"><div class="summaryBox w"><span class="code">$($script:lang['Warning']       )</span><span class="num">$($resultsplit.w     )</span></div></a>
-            <a href="#" onclick="sh_fail();"><div class="summaryBox f"><span class="code">$($script:lang['Fail']          )</span><span class="num">$($resultsplit.f     )</span></div></a>
-            <a href="#" onclick="sh_manu();"><div class="summaryBox m"><span class="code">$($script:lang['Manual']        )</span><span class="num">$($resultsplit.m     )</span></div></a>
-            <a href="#" onclick="sh_nota();"><div class="summaryBox n"><span class="code">$($script:lang['Not-Applicable'])</span><span class="num">$($resultsplit.n     )</span></div></a>
-            <a href="#" onclick="sh_erro();"><div class="summaryBox e"><span class="code">$($script:lang['Error']         )</span><span class="num">$($resultsplit.e     )</span></div></a>
+            <a href="#" onclick="showall();"><div class="summaryBox x"><span class="code">$($script:lang['ShowAll']       )</span><span class="num">$($ResultsInput.Count - 1)</span></div></a>
+            <a href="#" onclick="sh_pass();"><div class="summaryBox p"><span class="code">$($script:lang['Pass']          )</span><span class="num">$($resultsplit.p         )</span></div></a>
+            <a href="#" onclick="sh_warn();"><div class="summaryBox w"><span class="code">$($script:lang['Warning']       )</span><span class="num">$($resultsplit.w         )</span></div></a>
+            <a href="#" onclick="sh_fail();"><div class="summaryBox f"><span class="code">$($script:lang['Fail']          )</span><span class="num">$($resultsplit.f         )</span></div></a>
+            <a href="#" onclick="sh_manu();"><div class="summaryBox m"><span class="code">$($script:lang['Manual']        )</span><span class="num">$($resultsplit.m         )</span></div></a>
+            <a href="#" onclick="sh_nota();"><div class="summaryBox n"><span class="code">$($script:lang['Not-Applicable'])</span><span class="num">$($resultsplit.n         )</span></div></a>
+            <a href="#" onclick="sh_erro();"><div class="summaryBox e"><span class="code">$($script:lang['Error']         )</span><span class="num">$($resultsplit.e         )</span></div></a>
         </div>
     </div>
     <div style="clear:both;"></div>
