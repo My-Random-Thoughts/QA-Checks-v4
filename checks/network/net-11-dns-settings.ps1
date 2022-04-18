@@ -88,7 +88,7 @@ Function net-11-dns-settings
                     If ($script:chkValues['DNSServers'] -contains $_) { $Found++ }
                 }
 
-                If ($Found -ne ($script:chkValues['DNSServers'].Count))
+                If ($Found -eq 0)
                 {
                     $result.result  =    $script:lang['Fail']
                     $result.message =    $script:lang['f002']
